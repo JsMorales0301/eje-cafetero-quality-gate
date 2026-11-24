@@ -216,7 +216,21 @@ autor omite la revisión de un cambio, se anota que se omitió.
   falladas, exit 1; tipo de corrupción inexistente -> `failed stage=corrupt`, exit 2. Tras los
   lotes rechazados, silver sigue con el lote limpio (1 lote, 5000 filas) y gold con 1.299, y
   `meta.quality_runs` guarda cada ejecución.
-- **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
+- **Revisión (Gentle AI):** riesgo medio (15 archivos, 561 líneas; la evidencia señaló el CSV
+  de muestra, que solo se movió de carpeta). Consentí la revisión. Una lente aplicada:
+  *reliability*. Resultado: **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos,
+  aún sin atender:
+  - *WARNING* (`src/pipeline/run.py:121-122`): `main()` calcula el límite de filas y crea la
+    conexión **fuera** del bloque que informa la etapa. Un `SOCRATA_ROW_LIMIT` inválido o una
+    configuración de base de datos ausente producen un traceback sin etapa y con **exit 1**, el
+    mismo código que significa "el gate rechazó el lote". Esto contradice el contrato de códigos
+    de salida que documenté y que Jenkins usará para distinguir fallos. **El revisor tiene
+    razón.**
+  - *SUGGESTION* (`src/pipeline/run.py`): ninguna prueba ejecuta `main()` de punta a punta, así
+    que una regresión en el mapeo de códigos de salida o en la línea `RESULT` pasaría inadvertida.
+  - *SUGGESTION* (`src/pipeline/corruption.py`): casos límite sin probar: `min_gt_max` cuando
+    ningún lote tiene mínimo < máximo (falla con `ValueError`, exit 2), comparaciones con NaN,
+    y `_scaled` descarta decimales en precios no enteros.
 
 ### T5 a T12
 
