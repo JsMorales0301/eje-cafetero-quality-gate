@@ -1,9 +1,10 @@
 """Gold aggregates against the real Postgres test database, with hand-computed values."""
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError, ProgrammingError
 
 from pipeline.gold import build_gold
 
@@ -26,18 +27,23 @@ SILVER_ROWS = [
 ]
 
 
+def _insert_silver(conn, producto, categoria, ciudad, medio, fecha_inicial):
+    """Insert one weekly observation: it ends 5 days after it starts, like the real data."""
+    conn.execute(
+        text("INSERT INTO silver.precios (producto, mercado, categoria, ciudad, "
+             "precio_minimo, precio_maximo, precio_medio, fecha_inicial, fecha_final, "
+             "_batch_id) VALUES (:p, 'M', :c, :ci, :mn, :mx, :md, :fi, :ff, 'test')"),
+        {"p": producto, "c": categoria, "ci": ciudad, "mn": medio - 10, "mx": medio + 10, "md": medio,
+         "fi": fecha_inicial, "ff": fecha_inicial + timedelta(days=5)},
+    )
+
+
 @pytest.fixture()
 def seeded(engine):
     with engine.begin() as conn:
         conn.execute(text("TRUNCATE silver.precios"))
-        for producto, categoria, ciudad, medio, fecha in SILVER_ROWS:
-            conn.execute(
-                text("INSERT INTO silver.precios (producto, mercado, categoria, ciudad, "
-                     "precio_minimo, precio_maximo, precio_medio, fecha_inicial, fecha_final, "
-                     "_batch_id) VALUES (:p, 'M', :c, :ci, :mn, :mx, :md, :fi, :ff, 'test')"),
-                {"p": producto, "c": categoria, "ci": ciudad, "mn": medio - 10, "mx": medio + 10,
-                 "md": medio, "fi": fecha, "ff": date(fecha.year, fecha.month, fecha.day)},
-            )
+        for row in SILVER_ROWS:
+            _insert_silver(conn, *row)
     yield engine
     with engine.begin() as conn:
         conn.execute(text("TRUNCATE silver.precios, gold.precio_mensual, gold.variacion_mensual"))
@@ -73,7 +79,8 @@ def test_monthly_average_and_count_per_product_city_month(seeded):
 def test_week_belongs_to_the_month_of_its_start_date(seeded):
     build_gold(seeded)
     monthly = _monthly(seeded)
-    # The Jan 29 observation ends inside February in reality, but counts for January.
+    # The Jan 29 week runs until Feb 3 (see _insert_silver) but counts for January only.
+    # Bucketing by end date would give January 1 and February 2, so this test tells them apart.
     assert monthly[("Tomate", "Pereira", date(2024, 1, 1))][1] == 2
     assert monthly[("Tomate", "Pereira", date(2024, 2, 1))][1] == 1
 
@@ -91,6 +98,35 @@ def test_variation_is_null_without_a_previous_calendar_month(seeded):
     var = _variation(seeded)
     assert var[("Tomate", "Pereira", date(2024, 1, 1))] == (None, None)  # first month
     assert var[("Tomate", "Pereira", date(2024, 4, 1))] == (None, None)  # March is missing
+
+
+def test_zero_previous_average_gives_null_variation_instead_of_dividing_by_zero(seeded):
+    with seeded.begin() as conn:
+        _insert_silver(conn, "Gratis", "Frutas", "Pereira", 0, date(2024, 1, 6))
+        _insert_silver(conn, "Gratis", "Frutas", "Pereira", 100, date(2024, 2, 3))
+    build_gold(seeded)
+    assert _variation(seeded)[("Gratis", "Pereira", date(2024, 2, 1))] == (Decimal("0.00"), None)
+
+
+def test_failed_rebuild_rolls_back_and_keeps_previous_gold(seeded, monkeypatch):
+    build_gold(seeded)
+    before = (_monthly(seeded), _variation(seeded))
+    monkeypatch.setattr("pipeline.gold._VARIATION_SQL", "INSERT INTO gold.does_not_exist VALUES (1)")
+    with pytest.raises(ProgrammingError):
+        build_gold(seeded)
+    monkeypatch.undo()
+    assert (_monthly(seeded), _variation(seeded)) == before
+
+
+def test_silver_schema_rejects_nulls_so_gold_never_aggregates_them(engine):
+    """Gold assumes silver has no NULLs; the table definition itself enforces it."""
+    with pytest.raises(IntegrityError):
+        with engine.begin() as conn:
+            conn.execute(text(
+                "INSERT INTO silver.precios (producto, mercado, categoria, ciudad, "
+                "precio_minimo, precio_maximo, precio_medio, fecha_inicial, fecha_final, "
+                "_batch_id) VALUES ('P', 'M', 'C', 'X', 1, 1, NULL, '2024-01-01', '2024-01-06', 't')"
+            ))
 
 
 def test_rebuilding_gold_does_not_duplicate_rows(seeded):
