@@ -52,4 +52,8 @@ Known limitation: only-precio_maximo x10 is not detected. Route: inline.
 Decision: silver holds the last approved batch (TRUNCATE + load); duplicates are flagged by
 the gate, not removed by silver.
 
+Gentle AI review of T2: approved (medium risk, reliability lens). Its 2 advisory findings were
+fixed in a follow-up prompt: integration tests now run on `<db>_test`; a silver load failure
+after a passing gate is audited as `silver_load_error`. 45 tests green; real silver untouched.
+
 Next: open PR for T2, then T3 `feat/gold-aggregates`.

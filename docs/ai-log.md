@@ -86,13 +86,33 @@ autor omite la revisión de un cambio, se anota que se omitió.
   en `meta.quality_runs`.
 - **Revisión (Gentle AI):** riesgo medio (10 archivos, 630 líneas; cambio ejecutable en
   `src/pipeline/promote.py`). Consentí la revisión. Una lente aplicada: *reliability*.
-  Resultado: **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos, aún sin atender:
+  Resultado: **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos, atendidos
+  después con un nuevo prompt (ver "Prompt de corrección"):
   - *WARNING* (`tests/test_promote_integration.py:18`): la limpieza de las pruebas de
     integración ejecuta `TRUNCATE silver.precios` sobre la base a la que apunte el entorno, por
     lo que correrlas contra la base real borra el silver vigente. Silver se regenera con
     `pipeline.promote`.
   - *SUGGESTION* (`src/pipeline/promote.py:58-65`): si la carga a silver falla en un lote que
     pasó el gate, la transacción se revierte y no queda fila en `meta.quality_runs`.
+- **Prompt de corrección (nuevo prompt, a partir de la revisión de Gentle AI):** Corrige los
+  dos hallazgos informativos de la revisión de Gentle AI sobre T2. (1) Las pruebas de
+  integración no deben tocar la base real: aíslalas en una base de datos de test. (2) Si la
+  carga a silver falla en un lote que pasó el gate, el fallo debe quedar registrado en
+  `meta.quality_runs`. Escribe primero las pruebas que reproduzcan cada hallazgo, corrígelos y
+  demuestra que el silver real no cambia al correr la suite.
+  - **Qué falló o faltó:** mi primera comprobación de "silver real intacto" fue débil: silver
+    ya estaba en 0 filas porque la suite anterior, sin aislamiento, lo había vaciado (el
+    hallazgo en acción). Además, en mi primer borrador de la corrección llamé a `_record_run`
+    con un engine en lugar de una conexión; lo detecté al releer, antes de ejecutarlo.
+  - **Cómo lo reformulé:** cargué 5000 filas reales en silver antes de correr la suite y
+    verifiqué que seguían ahí después; corregí `_record_run` para usar una conexión.
+  - **Resultado final:** las dos pruebas nuevas fallaron primero (RED) por la razón esperada.
+    Ahora la suite corre en una base `canasta_test` creada bajo demanda con el mismo esquema, y
+    un fallo de carga queda registrado como `silver_load_error` en `meta.quality_runs`, deja
+    silver con el último lote bueno y se vuelve a lanzar. 45 pruebas pasan. Silver real: 5000
+    filas antes y después de la suite.
+  - **Revisión (Gentle AI):** esta corrección no se volvió a revisar con Gentle AI; queda sujeta
+    a la revisión del siguiente cambio de riesgo medio o alto, si se concede.
 
 ### T3 a T12
 
