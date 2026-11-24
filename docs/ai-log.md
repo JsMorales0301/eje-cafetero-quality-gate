@@ -231,6 +231,28 @@ autor omite la revisión de un cambio, se anota que se omitió.
   - *SUGGESTION* (`src/pipeline/corruption.py`): casos límite sin probar: `min_gt_max` cuando
     ningún lote tiene mínimo < máximo (falla con `ValueError`, exit 2), comparaciones con NaN,
     y `_scaled` descarta decimales en precios no enteros.
+- **Prompt de corrección (nuevo prompt, a partir de la revisión de Gentle AI):** Corrige los
+  tres hallazgos informativos de la revisión de T4. Un error de configuración (límite de filas
+  inválido o variable de base de datos ausente) debe salir con exit 2 y nombrar su etapa, nunca
+  con exit 1, que solo significa "el gate rechazó el lote". Agrega una prueba de `main()` de
+  punta a punta para los códigos 0, 1 y 2 y la línea `RESULT`. Cubre los casos límite del
+  inyector (sin filas elegibles, NaN, decimales) y corrige lo que falle. Escribe primero las
+  pruebas.
+  - **Qué falló o faltó:** el hallazgo principal era un error real de mi diseño: el contrato de
+    códigos de salida que documenté no se cumplía antes de la primera etapa. Además, mi segunda
+    demostración por CLI no valió: usé `POSTGRES_USER=` vacío, que no equivale a "ausente", y
+    corrí con una imagen vieja que aún no tenía la muestra en `data/sample/`. Esa ausencia ya
+    la cubre la prueba unitaria; la imagen reconstruida corre el flujo sin montar nada.
+  - **Cómo lo reformulé:** moví la lectura del límite y la conexión a un bloque propio con etapa
+    `config`; `SOCRATA_ROW_LIMIT` inválido da un mensaje claro y la variable ausente se nombra
+    explícitamente. Los precios con decimales se formatean sin perder precisión.
+  - **Resultado final:** de las pruebas nuevas, 3 fallaron primero (RED): los dos errores de
+    configuración y el precio negativo con decimales (`-2050.5` salía como `-2050`). El resto
+    (`main()` de punta a punta, casos límite de `min_gt_max`, NaN) se escribió sobre
+    comportamiento que ya existía y pasó a la primera: son pruebas de caracterización. Ahora
+    90 pruebas pasan; con `SOCRATA_ROW_LIMIT=abc` el CLI devuelve
+    `RESULT FAILED stage=config exit=2`.
+  - **Revisión (Gentle AI):** esta corrección no se ha revisado todavía.
 
 ### T5 a T12
 
