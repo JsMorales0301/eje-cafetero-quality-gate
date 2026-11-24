@@ -181,7 +181,7 @@ docker compose up -d app
 ```
 
 Ábrelo en <http://localhost:8501>. Tiene tres secciones: historial del quality gate, precios por
-producto y ciudad (capa gold), y **"What would the dashboard show without the gate?"**, que
+producto y ciudad (capa gold), y **"¿Qué mostraría el dashboard sin el control?"**, que
 inyecta una corrupción al último lote aprobado y compara lo que el dashboard habría mostrado.
 
 ## Pruebas
@@ -190,7 +190,7 @@ inyecta una corrupción al último lote aprobado y compara lo que el dashboard h
 docker compose run --rm app pytest -q
 ```
 
-Esperado: `119 passed`. Las pruebas de integración usan su propia base `canasta_test`, creada
+Esperado: `127 passed`. Las pruebas de integración usan su propia base `canasta_test`, creada
 sola: **no tocan tus datos**.
 
 ## Variables de entorno (`.env`)
@@ -228,7 +228,7 @@ sql/init.sql         esquemas bronze, silver, gold y meta
 src/pipeline/        extract, bronze, silver, quality (gate), promote, gold, corruption, run
 src/dashboard/       app de Streamlit, consultas, gráficos y lógica "qué pasaría sin el gate"
 data/sample/         muestra determinista de 30 filas
-tests/               119 pruebas (unitarias e integración)
+tests/               127 pruebas (unitarias e integración)
 docs/                registro de uso de IA, informe y diagramas
 ```
 
