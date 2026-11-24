@@ -1,25 +1,8 @@
 """Integration test against the real Postgres container (skipped if unreachable)."""
-import os
-
 import pandas as pd
-import pytest
 from sqlalchemy import text
 
 from pipeline.bronze import count_batch, load_bronze, new_batch_id
-from pipeline.db import get_engine
-
-
-@pytest.fixture(scope="module")
-def engine():
-    if not os.getenv("POSTGRES_HOST"):
-        pytest.skip("POSTGRES_HOST not set")
-    eng = get_engine()
-    try:
-        with eng.connect() as conn:
-            conn.execute(text("SELECT 1"))
-    except Exception as exc:  # noqa: BLE001
-        pytest.skip(f"database unreachable: {exc}")
-    return eng
 
 
 def test_load_bronze_persists_exact_row_count_and_raw_text(engine):
