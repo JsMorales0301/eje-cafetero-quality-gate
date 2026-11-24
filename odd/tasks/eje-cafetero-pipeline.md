@@ -25,7 +25,7 @@ Everything under this repository. Push, PR creation and merge stay with the user
 - [x] T2 `feat/silver-quality-gate`: Great Expectations suite (nulls, types, price > 0, min <= medio <= max, parseable dates, valid categories, duplicates), silver transform (Spanish dates, casts, normalization), gate blocks silver on failure, writes `meta.quality_runs`. Check: clean batch passes, corrupted batch is rejected.
 - [x] T3 `feat/gold-aggregates`: `gold.precio_mensual` and `gold.variacion_mensual`. Check: known product/city/month matches a hand-computed value.
 - [x] T4 `feat/pipeline-cli`: `python -m pipeline.run` orchestrator, `--source live|fixture` plus `--corrupt KINDS` (changed from `clean|corrupted`: two orthogonal flags), corruption injector (nulls, duplicates, price x10, min>max, bad dates, negatives). Check: example operation prints the expected result.
-- [ ] T5 `feat/dashboard`: Streamlit on gold + last quality-gate status, plus a "what a corrupted batch would have shown" comparison. Check: container serves on 8501.
+- [x] T5 `feat/dashboard`: Streamlit on gold + last quality-gate status, plus a "what a corrupted batch would have shown" comparison. Check: container serves on 8501.
 - [ ] T6 `docs/readme-and-report`: README (clone-and-run), architecture diagram, screenshots, report, ai-log filled.
 - [ ] T7 `chore/clean-clone-validation`: clone into an empty folder and bring the system up using only the README.
 

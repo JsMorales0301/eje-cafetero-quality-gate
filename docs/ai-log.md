@@ -260,8 +260,43 @@ autor omite la revisión de un cambio, se anota que se omitió.
     un error de tipeo en `--corrupt` descarga primero toda la ventana de la API y recién
     entonces sale con exit 2. Validar los tipos al inicio ahorraría esa llamada de red. El
     comportamiento es correcto y está probado; es solo una mejora de robustez.
+- **Segunda revisión (Gentle AI):** el último commit de documentación de T4 (+7 líneas) generó
+  otro candidato de riesgo medio. Consentí y Gentle AI lo volvió a **aprobar**, sin bloqueantes.
+  Repitió la sugerencia de validar `--corrupt` antes de extraer y agregó una nueva: ninguna
+  prueba cubre que falte el archivo de muestra (lo atrapa el manejador genérico de la etapa
+  `extract`, exit 2). Ambas siguen sin atender.
 
-### T5 a T12
+### T5: dashboard (`feat/dashboard`)
+
+- **Prompt inicial:** Implementa el dashboard en Streamlit que lee solo la capa gold y el estado
+  del quality gate. Debe mostrar el historial de ejecuciones del gate, la serie de precios por
+  producto y ciudad, y una sección "qué pasaría sin el gate" que aplique una corrupción
+  controlada al último lote aprobado, muestre si el gate la rechazaría y compare el ranking de
+  mayores alzas con y sin el gate. Separa la lógica en funciones puras con pruebas, usa colores
+  validados con indicador no cromático, y verifica en el navegador con una captura.
+- **Qué falló o faltó:** (1) Mirar el resultado en el navegador encontró dos defectos que ninguna
+  prueba veía: las etiquetas directas de las dos líneas se escribían una sobre otra, y las
+  tablas lado a lado quedaban cortadas. (2) Un hallazgo de diseño: si todos los precios se
+  multiplican por 10 (`unit_error`), el **porcentaje** de variación no cambia (la escala se
+  cancela), así que el ranking de alzas solo se distorsiona con corrupciones parciales como
+  `typo_zeros`; por eso la sección compara niveles y ranking. (3) Dos errores de mis pruebas:
+  `AppTest` resuelve rutas relativas contra el archivo de la prueba, y asumí que `20156.5` se
+  redondea a `20,157` cuando Python lo redondea al par (`20,156`). (4) El texto de la interfaz
+  está en inglés, que es el idioma por defecto de los artefactos; si la docente lo prefiere en
+  español, es un cambio de cadenas.
+- **Cómo lo reformulé:** escribí primero las pruebas de ambos defectos visuales (las etiquetas se
+  separan 20 px aunque las series terminen en el mismo valor; las tablas bajan a 4 columnas) y
+  luego los corregí; ajusté las pruebas erróneas.
+- **Resultado final:** 119 pruebas pasan. Verificado en el navegador con 5000 filas reales: el
+  historial muestra los lotes aprobados y rechazados con sus reglas; con `typo_zeros` al 5 % el
+  gate rechaza el lote (`price_order.maximo_gte_medio`, `price_plausible_range.precio_medio`) y
+  226 de 1.299 promedios mensuales habrían cambiado. El ranking con datos aprobados lidera con
+  Pitahaya +54,3 %; sin el gate aparece Manzana roja importada +2.305,3 % (falsa alarma) y la
+  Pitahaya desaparece del top 5. Los puertos solo se publican en `127.0.0.1` y la telemetría de
+  Streamlit está desactivada.
+- **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
+
+### T6 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).
