@@ -54,15 +54,47 @@ def promote_batch(engine: Engine, batch_id: str, today=None) -> QualityReport:
     candidate = build_silver_candidate(read_bronze_batch(engine, batch_id))
     report = validate(candidate, today=today)
 
-    with engine.begin() as conn:
-        if report.passed:
+    if not report.passed:
+        with engine.begin() as conn:
+            _record_run(conn, batch_id, report)
+        return report
+
+    try:
+        with engine.begin() as conn:
             conn.execute(text("TRUNCATE silver.precios"))
             candidate.assign(_batch_id=batch_id).to_sql(
                 "precios", conn, schema="silver", if_exists="append",
                 index=False, method="multi", chunksize=1000,
             )
-        _record_run(conn, batch_id, report)
+            _record_run(conn, batch_id, report)
+    except Exception as exc:
+        # The load rolled back (silver keeps the last good data), and with it the audit row.
+        # Record the failure in its own transaction so it stays observable, then re-raise.
+        try:
+            with engine.begin() as conn:
+                _record_run(conn, batch_id, _load_failure_report(report, exc))
+        except Exception as audit_exc:  # noqa: BLE001 - never mask the original failure
+            print(f"could not record load failure in meta.quality_runs: {audit_exc}",
+                  file=sys.stderr)
+        raise
     return report
+
+
+def _load_failure_report(report: QualityReport, exc: Exception) -> QualityReport:
+    detail = {
+        "rule": "silver_load_error",
+        "expectation": "silver_load",
+        "unexpected_count": None,
+        "observed_value": None,
+        "error": f"{type(exc).__name__}: {exc}"[:500],
+    }
+    return QualityReport(
+        passed=False,
+        expectations_run=report.expectations_run,
+        expectations_failed=report.expectations_failed + 1,
+        rows_checked=report.rows_checked,
+        failed_details=[*report.failed_details, detail],
+    )
 
 
 def main(argv: list[str]) -> int:
