@@ -394,6 +394,55 @@ autor omite la revisión de un cambio, se anota que se omitió.
   `pandoc docs/informe-escenario-3.md -o docs/informe-escenario-3.docx --reference-doc=docs/apa-reference.docx --resource-path=docs`.
 - **Revisión (Gentle AI):** pendiente.
 
+### Corrección: instrucción de la Captura 1 del informe (`docs/clarify-capture-1`)
+
+- **Prompt (mío, textual):** "Cuando hago el docker compose ps solo me aparece db" y, después,
+  que ya había ejecutado `docker compose build app`, `docker compose up -d db` y
+  `docker compose run --rm app python -m pipeline.run --source fixture`.
+- **Qué falló o faltó:** el informe decía que `docker compose ps` debía mostrar `app` y `db`,
+  pero esos tres comandos (la sección "Reproducción") no dejan `app` corriendo: `run --rm` crea un
+  contenedor temporal que se borra al terminar. La instrucción era incompleta y es un error mío;
+  el comportamiento del sistema era el correcto. Lo comprobé en tu máquina: solo existía el
+  contenedor `db`, sano, y ningún contenedor `app`, ni siquiera detenido.
+- **Cómo lo reformulé:** la Captura 1 ahora indica que primero hay que ejecutar
+  `docker compose up -d app`, y la sección "Reproducción" aclara que solo deja corriendo la base.
+- **Resultado final:** cambio solo de documentación; no cambió ningún comportamiento.
+- **Revisión (Gentle AI):** pendiente.
+
+### Dashboard en español (`feat/dashboard-es`)
+
+- **Prompt (mío, textual):** "Vuelve el dashboard en español por favor".
+- **Qué falló o faltó:** (1) En T5 dejé la interfaz en inglés, que es el idioma por defecto de los
+  artefactos, y al cerrar T5 pregunté si la querías en español; no hubo respuesta y quedó en
+  inglés. (2) **Las cifras que cité de T5 no eran reproducibles.** Al volver a abrir el dashboard
+  traducido, la falsa alarma había cambiado (de "Manzana roja importada +2.305,3 %" a "Coco
+  +2.396,7 %", y de 226 a 230 promedios cambiados). La causa: la simulación lee el último lote
+  desde Postgres sin `ORDER BY`, y la corrupción con semilla fija elige filas por posición, así
+  que el resultado dependía del orden físico en cada base de datos. Lo detecté al comparar mis
+  capturas nuevas con las anteriores. (3) Mi primer intento de cargar datos para la captura
+  falló sin avisar: en zsh, una variable sin comillas no se separa en palabras, así que el
+  programa recibió `"--source live"` como un único argumento. (4) El panel del navegador estaba
+  en modo oscuro y lo pasé a claro para que las capturas coincidieran con las anteriores.
+  (5) Con las cifras nuevas, el informe quedó desactualizado: decía que la pitahaya "desaparece"
+  del ranking, y ahora aparece con una cifra falsa.
+- **Cómo lo reformulé:** primero las pruebas en español (RED), incluida una que exige que cada
+  tipo de corrupción tenga su nombre en español; luego la traducción. Para la reproducibilidad,
+  una prueba que lee el mismo lote guardado en dos órdenes distintos y exige el mismo resultado
+  (falló primero), y después `ORDER BY` por todas las columnas fuente. Todo se verificó en un
+  proyecto de Docker aparte, con otros puertos y su propia base, sin tocar tu base ni tus
+  contenedores.
+- **Resultado final:** 127 pruebas pasan. El dashboard está en español: títulos, métricas,
+  tablas, gráficos, mensajes y los nombres de los tipos de corrupción (por ejemplo "Filas
+  duplicadas"); los números siguen la convención española (coma decimal y punto de miles:
+  `20.156`, `+54,3 %`) y los meses se rotulan en español (`ene 2023`, `jul 2023`). Con datos
+  reales (5000 filas), la simulación da el mismo resultado en dos lotes distintos: sin el control
+  encabeza el kiwi con +4.992,1 %, la pitahaya aparece con +3.921,5 % y 225 de 1.299 promedios
+  cambian. El informe y el README se actualizaron con esas cifras y con 127 pruebas, y se
+  reemplazaron las cuatro capturas del dashboard por otras de la versión en español. La
+  afirmación de T5 de que la pitahaya "desaparece" del ranking no se sostiene con la simulación
+  reproducible.
+- **Revisión (Gentle AI):** pendiente.
+
 ### T8 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,

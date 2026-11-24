@@ -31,19 +31,27 @@ def _run() -> AppTest:
 def test_empty_database_explains_how_to_get_data(engine):
     at = _run()
     assert not at.exception
-    assert any("No approved data" in i.value for i in at.info)
+    assert any("Todavía no hay datos aprobados" in i.value for i in at.info)
 
 
-def test_app_renders_every_section_with_approved_data(engine):
+def test_app_renders_every_section_in_spanish_with_approved_data(engine):
     run_pipeline(engine, source="fixture")
     at = _run()
     assert not at.exception
     headers = [h.value for h in at.subheader]
-    assert any("Quality gate" in h for h in headers)
-    assert any("Prices" in h for h in headers)
-    assert any("without the gate" in h.lower() for h in headers)
-    assert at.selectbox(key="product") is not None and at.selectbox(key="city") is not None
+    assert any("Control de calidad" in h for h in headers)
+    assert any("Precios" in h for h in headers)
+    assert any("sin el control" in h.lower() for h in headers)
+    assert at.selectbox(key="product").label == "Producto"
+    assert at.selectbox(key="city").label == "Ciudad"
     assert len(at.get("plotly_chart")) >= 1
+
+
+def test_corruption_kinds_are_offered_with_spanish_names(engine):
+    run_pipeline(engine, source="fixture")
+    options = _run().multiselect(key="whatif_kinds").options
+    assert "Filas duplicadas" in options and "Precios nulos" in options
+    assert "duplicates" not in options  # the code identifier is not shown to the reader
 
 
 def test_what_if_with_duplicates_shows_the_gate_rejecting_the_batch(engine):
@@ -51,7 +59,7 @@ def test_what_if_with_duplicates_shows_the_gate_rejecting_the_batch(engine):
     at = _run()
     at.multiselect(key="whatif_kinds").set_value(["duplicates"]).run()
     assert not at.exception
-    assert any("REJECTED" in e.value for e in at.error)
+    assert any("RECHAZADO" in e.value for e in at.error)
 
 
 def test_what_if_admits_when_the_gate_misses_the_corruption(engine):
@@ -60,4 +68,4 @@ def test_what_if_admits_when_the_gate_misses_the_corruption(engine):
     at = _run()
     at.multiselect(key="whatif_kinds").set_value(["unit_error"]).run()
     assert not at.exception
-    assert any("did NOT detect" in w.value for w in at.warning)
+    assert any("NO detectó" in w.value for w in at.warning)

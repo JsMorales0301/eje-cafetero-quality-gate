@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import text
 
 from pipeline.bronze import load_bronze, new_batch_id
-from pipeline.promote import promote_batch
+from pipeline.promote import promote_batch, read_bronze_batch
 
 
 def _fixture() -> pd.DataFrame:
@@ -88,6 +88,22 @@ def test_load_failure_after_passing_gate_is_audited_and_keeps_silver(engine, mon
         assert "silver_load_error" in {d["rule"] for d in runs[0].failed_details}
     finally:
         _cleanup(engine, good, flaky)
+
+
+def test_reading_a_bronze_batch_does_not_depend_on_the_order_it_was_stored_in(engine):
+    """A seeded corruption picks rows by position, so the same batch must always be read in
+    the same order, or the dashboard's "what if" would show different numbers on each machine."""
+    raw = _fixture()
+    shuffled = raw.sample(frac=1, random_state=7).reset_index(drop=True)
+    a, b = new_batch_id(), new_batch_id()
+    load_bronze(raw, engine, a, "fixture")
+    load_bronze(shuffled, engine, b, "fixture")
+    try:
+        pd.testing.assert_frame_equal(
+            read_bronze_batch(engine, a).reset_index(drop=True),
+            read_bronze_batch(engine, b).reset_index(drop=True))
+    finally:
+        _cleanup(engine, a, b)
 
 
 def test_promoting_the_same_batch_twice_does_not_duplicate_silver(engine):

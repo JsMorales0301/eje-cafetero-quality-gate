@@ -70,8 +70,9 @@ expectativas si no pasa pruebas de calidad.
 
 Con datos aprobados, el mayor aumento de precio real del último mes es el de la pitahaya
 (+54,3 %). Si un lote con ceros de más en el 5 % de las filas se saltara el control, aparecería
-la manzana roja importada con +2.305 %, una falsa alarma, y la pitahaya real desaparecería del
-ranking. Con el control de calidad, ese lote se rechaza y el *dashboard* nunca lo ve.
+el ranking se llenaría de aumentos falsos de miles de por ciento: el kiwi, con +4.992 %,
+encabezaría la lista, y la cifra real de la pitahaya quedaría tapada por una falsa de +3.921 %.
+Con el control de calidad, ese lote se rechaza y el *dashboard* nunca lo ve.
 
 # Conceptos de ingeniería de datos
 
@@ -184,7 +185,7 @@ Integración continua frente a DataOps, y su aplicación en el proyecto
 | Aspecto | Integración continua | DataOps | En este proyecto |
 |:--------|:-------------------------|:-------------------------|:------------------------|
 | Qué protege | La integración de cambios de código en una base compartida (Fowler, 2024). | El ciclo completo de la analítica: código, datos y el *pipeline* que los mueve (Munappy et al., 2020). | `pytest` protege el código; el control de calidad protege los datos. |
-| Qué se prueba | El código, con una compilación automática que incluye pruebas (Fowler, 2024). | El código ("Analytics is code") y también los datos que fluyen (DataKitchen, s. f.). | 119 pruebas de código y 22 expectativas sobre cada lote. |
+| Qué se prueba | El código, con una compilación automática que incluye pruebas (Fowler, 2024). | El código ("Analytics is code") y también los datos que fluyen (DataKitchen, s. f.). | 127 pruebas de código y 22 expectativas sobre cada lote. |
 | Cuándo se ejecutan las pruebas | Cuando alguien integra un cambio en la rama principal (Fowler, 2024). | Cuando cambia el código y cada vez que llegan datos nuevos. | `pytest` al cambiar el código; el control, en cada ejecución de `pipeline.run`. |
 | Qué significa una falla | Un error de integración o un defecto del cambio, que se corrige de inmediato (Fowler, 2024). | Un defecto en el código o en el dato, que se detecta y se vigila de forma continua (DataKitchen, s. f.). | Código de salida 1: el lote se rechaza y *silver* y *gold* conservan lo aprobado. |
 
@@ -275,7 +276,9 @@ las reglas que fallaron.
 
 # Reproducción
 
-El detalle y los errores comunes están en el README del repositorio. En resumen:
+El detalle y los errores comunes están en el README del repositorio. En resumen (estos comandos
+dejan corriendo solo la base de datos; el *dashboard* se levanta aparte con
+`docker compose up -d app`):
 
 ```bash
 git clone https://github.com/JsMorales0301/eje-cafetero-quality-gate.git
@@ -294,8 +297,11 @@ marcado para la captura de pantalla.
 
 ## Captura 1. Contenedores en ejecución
 
-El comando `docker compose ps` debe mostrar `app` y `db` con estado `Up`, y `db` en `healthy`.
-Salida real, con el formato de tabla corto (en cada equipo los nombres llevan el de la carpeta):
+Los comandos de la sección "Reproducción" dejan corriendo solo `db`: `app` se ejecuta de forma
+temporal y se borra al terminar. Para que `docker compose ps` muestre los dos contenedores, antes
+hay que levantar el *dashboard* con `docker compose up -d app`. Entonces el comando debe mostrar
+`app` y `db` con estado `Up`, y `db` en `healthy`. Salida real, con el formato de tabla corto (en
+cada equipo los nombres llevan el de la carpeta):
 
 ```text
 SERVICE   STATUS                    PORTS
@@ -303,7 +309,8 @@ app       Up 2 seconds              127.0.0.1:8501->8501/tcp
 db        Up 37 seconds (healthy)   127.0.0.1:5433->5432/tcp
 ```
 
-[PENDIENTE (TÚ): pegar aquí tu captura 1 de `docker compose ps`.]{.mark}
+[PENDIENTE (TÚ): ejecutar `docker compose up -d app` y luego pegar aquí tu captura 1 de
+`docker compose ps`.]{.mark}
 
 ## Captura 2. Guardar un dato
 
@@ -386,7 +393,7 @@ Figura 5
 :::
 
 ::: {custom-style="Figura Titulo"}
-Con el 5 % de las filas con ceros de más, el control rechaza el lote; sin él aparecerían picos falsos de hasta 200 mil COP
+Con el 5 % de las filas con ceros de más, el control rechaza el lote; sin él aparecerían picos falsos de más de 200 mil COP
 :::
 
 ![](images/dashboard-whatif-chart.jpg)
@@ -401,8 +408,9 @@ Mayores aumentos de precio con y sin el control de calidad
 
 ![](images/dashboard-whatif-tables.jpg)
 
-*Nota.* Con datos aprobados lidera la pitahaya (+54,3 %). Sin el control aparece una falsa alarma
-de +2.305 % y la pitahaya desaparece del ranking.
+*Nota.* Con datos aprobados lidera la pitahaya (+54,3 %). Sin el control, el ranking lo encabeza
+el kiwi con un aumento falso de +4.992,1 %, y la pitahaya aparece con +3.921,5 %, una cifra
+también falsa.
 
 [PENDIENTE (TÚ, opcional): reemplazar las Figuras 3 a 6 por capturas tuyas, tomadas en tu
 navegador, para que la evidencia sea de tu propio entorno.]{.mark}
@@ -430,7 +438,7 @@ Resultado de seguir el README desde un clon limpio
 | Lote corrupto | Termina con código 1 y *silver* conserva sus 30 filas. |
 | Datos reales | `bronze=5000 silver=5000 gold=1299`. |
 | *Dashboard* | Responde en `http://localhost:8501`. |
-| Pruebas | 119 pasan. |
+| Pruebas | 119 pasaron (el número de pruebas del proyecto en el momento de esa validación; hoy son 127). |
 
 El README también se verificó en GitHub: los dos diagramas Mermaid y las tablas se dibujan bien.
 

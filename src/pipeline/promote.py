@@ -20,7 +20,10 @@ from pipeline.silver import build_silver_candidate
 
 def read_bronze_batch(engine: Engine, batch_id: str) -> pd.DataFrame:
     columns = ", ".join(SOURCE_COLUMNS)
-    query = text(f"SELECT {columns} FROM bronze.precios_raw WHERE _batch_id = :b")
+    # Ordered by every source column: a seeded corruption picks rows by position, so the same
+    # batch must always come back in the same order, whatever order Postgres stored it in.
+    query = text(f"SELECT {columns} FROM bronze.precios_raw WHERE _batch_id = :b "
+                 f"ORDER BY {columns}")
     with engine.connect() as conn:
         return pd.read_sql(query, conn, params={"b": batch_id}).astype("string")
 
