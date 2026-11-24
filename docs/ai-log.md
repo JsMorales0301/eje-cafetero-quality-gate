@@ -125,7 +125,69 @@ autor omite la revisión de un cambio, se anota que se omitió.
     - *SUGGESTION* (`tests/test_promote_integration.py`): las pruebas de promoción no fijan la
       fecha de hoy, así que la regla de fechas plausibles depende del reloj real.
 
-### T3 a T12
+- **Revisión omitida:** un último commit de solo documentación (el registro de la revisión de la
+  corrección, +11 líneas sobre el candidato ya aprobado) volvió a generar un candidato de riesgo
+  medio. Gentle AI pidió consentimiento y elegí **omitir** la revisión de ese candidato.
+
+### T3: capa gold (`feat/gold-aggregates`)
+
+- **Prompt inicial:** Implementa la capa gold: `gold.precio_mensual` (precio promedio y número
+  de observaciones por producto, ciudad y mes) y `gold.variacion_mensual` (variación porcentual
+  contra el mes calendario anterior, nula si ese mes no existe). Debe construirse a partir de
+  silver y poder reconstruirse sin duplicar. Escribe primero pruebas con valores calculados a
+  mano y verifica contra los datos reales con un cálculo independiente en pandas.
+- **Qué falló o faltó:** nada falló en las pruebas (RED por módulo inexistente, luego GREEN).
+  En la verificación real, mi comparación independiente mostró una diferencia máxima de 0,01 en
+  las variaciones y no quise atribuirla a redondeo sin comprobarlo; además mis dos primeros
+  scripts de comprobación fallaron por mezclar `Decimal` con `float` al leer de Postgres.
+- **Cómo lo reformulé:** recalculé las 1.222 variaciones en aritmética decimal con redondeo
+  half-up, que es la convención de Postgres.
+- **Resultado final:** 52 pruebas pasan. Con 5000 filas reales: 1.299 filas en
+  `gold.precio_mensual` y 1.299 en `gold.variacion_mensual`; los promedios y conteos coinciden
+  al 100 % con un cálculo independiente en pandas (0 filas sin pareja, la suma de observaciones
+  es 5000 = filas de silver). Las variaciones coinciden exactamente con el cálculo decimal
+  half-up; solo 1 fila difiere del redondeo en float de numpy, que es otra convención.
+  Convenciones: una semana pertenece al mes de su fecha inicial, y la variación se mide contra
+  el mes calendario anterior (nula si ese mes no tiene datos).
+- **Revisión (Gentle AI):** riesgo medio (4 archivos, 222 líneas; cambio ejecutable en
+  `src/pipeline/gold.py`). Consentí la revisión. Una lente aplicada: *reliability*. Resultado:
+  **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos, aún sin atender:
+  - *WARNING* (`src/pipeline/gold.py:20-30`): gold asume que silver no tiene nulos y se
+    reconstruye sin comprobar que el último gate pasó; tampoco hay prueba de que un fallo a
+    mitad de la reconstrucción deje intacto el gold anterior.
+  - *SUGGESTION* (`src/pipeline/gold.py:44-47`): la rama en la que el promedio del mes anterior
+    es 0 (variación nula por la guarda) no tiene prueba.
+  - *SUGGESTION* (`tests/test_gold_integration.py:33-36`): **el revisor tiene razón.** Mi
+    fixture usa `fecha_final = fecha_inicial`, así que la prueba "la semana pertenece al mes de
+    su fecha inicial" no ejercita una semana que cruce de mes y pasaría igual si se agrupara
+    por fecha final. La convención está implementada, pero esa prueba no la demuestra.
+- **Prompt de corrección (nuevo prompt, a partir de la revisión de Gentle AI):** Corrige los
+  tres hallazgos informativos de la revisión de T3. Haz que el fixture tenga una semana que
+  cruce de mes y demuestra con una mutación (agrupar por fecha final) que la prueba ahora
+  discrimina. Agrega pruebas para el promedio previo en cero y para que un fallo a mitad de
+  la reconstrucción deje intacto el gold anterior. No agregues una guarda de "el último gate
+  pasó": comprueba en su lugar que silver rechaza nulos.
+  - **Qué falló o faltó:** el hallazgo sobre la prueba de la semana era correcto y era un error
+    mío. Durante la mutación hice un `git stash` innecesario y escribí un archivo temporal en
+    `/tmp`; no dejaron residuos y lo revertí. Al refactorizar el fixture cambié sin necesidad
+    el rango mínimo/máximo (de medio ± 10 a igual al medio), lo que la revisión señaló; lo
+    restauré.
+  - **Cómo lo reformulé:** la semana del 29 de enero ahora termina el 3 de febrero
+    (`fecha_final = fecha_inicial + 5 días`, como en los datos reales).
+  - **Resultado final:** con la mutación (agrupar por fecha final) fallan 3 pruebas; con la
+    implementación real pasan. Las pruebas del promedio previo en cero, del rollback de gold y
+    de que silver rechaza nulos se escribieron sobre comportamiento que ya existía, así que
+    pasaron a la primera: son pruebas de caracterización, no de un defecto nuevo. No agregué
+    la guarda del gate porque bloquearía reconstruir gold tras un lote rechazado, aunque silver
+    siga siendo bueno. 55 pruebas pasan.
+  - **Revisión (Gentle AI):** candidato parcial (1 archivo, 26 líneas; solo el arreglo del
+    fixture). Consentí la revisión; una lente, *reliability*; **aprobada** sin bloqueantes. Dos
+    observaciones menores: el cambio del rango mínimo/máximo (restaurado) y que el comentario
+    de la prueba menciona el resultado por fecha final pero solo se afirma el de fecha inicial,
+    lo que el revisor juzgó suficiente. Las pruebas añadidas después de esa revisión no se
+    volvieron a revisar.
+
+### T4 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).
