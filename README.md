@@ -213,7 +213,7 @@ sola: **no tocan tus datos**.
 | `failed to resolve host 'db'` | La base no está levantada. Ejecuta `docker compose up -d db` y espera a que `docker compose ps` diga `healthy`. |
 | `Cannot connect to the Docker daemon` | Docker Desktop no está abierto. Ábrelo y espera a que termine de iniciar. |
 | `password authentication failed` tras cambiar `POSTGRES_PASSWORD` | PostgreSQL fija la contraseña la primera vez que crea el volumen. Para empezar de cero: `docker compose down -v` (**borra los datos**) y vuelve a levantar. |
-| Variables sin definir / `missing environment variable` | Falta el archivo `.env`: `cp .env.example .env`. |
+| `The "POSTGRES_PASSWORD" variable is not set. Defaulting to a blank string.` y `db` queda en `Exited (1)` con `Database is uninitialized and superuser password is not specified` | Falta el archivo `.env`: ejecuta `cp .env.example .env` y vuelve a levantar. |
 | Falla `--source live` | Sin internet o la API no responde. Usa `--source fixture`. |
 | `RESULT FAILED stage=config exit=2` | Una variable de entorno es inválida (por ejemplo `SOCRATA_ROW_LIMIT` no es un número ni `all`). |
 

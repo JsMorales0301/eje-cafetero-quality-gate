@@ -294,9 +294,47 @@ autor omite la revisión de un cambio, se anota que se omitió.
   Pitahaya +54,3 %; sin el gate aparece Manzana roja importada +2.305,3 % (falsa alarma) y la
   Pitahaya desaparece del top 5. Los puertos solo se publican en `127.0.0.1` y la telemetría de
   Streamlit está desactivada.
+- **Revisión (Gentle AI):** **omitida.** Riesgo medio (13 archivos, 710 líneas; cambio de
+  configuración en `Dockerfile`). Gentle AI pidió consentimiento para la rama completa de T5 y
+  elegí **omitir**, así que el dashboard, sus consultas y sus pruebas no tuvieron una segunda
+  mirada de Gentle AI. La verificación de T5 se apoya en las 119 pruebas y en la comprobación
+  en el navegador.
+
+### T6: README, diagramas e informe (`docs/readme-and-report`)
+
+- **Prompt inicial:** Escribe el README para levantar el sistema y ejecutar la operación de
+  ejemplo con su resultado esperado, anticipando los errores comunes; los diagramas de
+  arquitectura y de flujo de datos; y un borrador del documento del Escenario 3 con espacios
+  para mis capturas. Genera las salidas esperadas ejecutando los comandos de verdad, revisa los
+  diagramas mirándolos, y comprueba el README en un clon limpio.
+- **Qué falló o faltó:** (1) Mi primer intento de generar las salidas esperadas falló: el
+  contenedor `db` no arrancó porque tu propio proyecto ya ocupaba los puertos 5433 y 8501, y mi
+  `/dev/null` escondió el error. Ese choque es justo un error común, así que entró al README.
+  (2) Los diagramas, al mirarlos, tenían etiquetas más anchas que el hueco entre cajas y cortaban
+  los bordes con un recuadro blanco; un reemplazo con `re.sub` falló por secuencias de escape y
+  el script siguió con la versión vieja sin avisar. (3) **Afirmé en el README que la falta de
+  `.env` produce `missing environment variable`; era falso.** Al reproducirlo, Compose avisa
+  `variable is not set. Defaulting to a blank string` y `db` termina con `Database is
+  uninitialized and superuser password is not specified`. (4) Mi comprobación de la fila de
+  Patilla usó un patrón con un espacio de menos y reportó un FALLO que era error mío.
+- **Cómo lo reformulé:** corregí el espaciado de los diagramas y volví a mirarlos; reescribí la
+  fila del README con el síntoma real; en lugar de usar un patrón a ojo, comparé el bloque del
+  README contra la salida real línea por línea. Verifiqué en un clon limpio del commit, en un
+  directorio con otro nombre para no chocar con tus contenedores en ejecución, y con un archivo de
+  *override* sin puertos publicados solo por el choque de puertos.
+- **Resultado final:** README con puesta en marcha, operación de ejemplo con resultado esperado,
+  demostración de lote corrupto, variables, errores comunes, estructura y limitaciones; dos
+  diagramas (Mermaid en el README y PNG para el informe); y un borrador del informe en Markdown
+  y Word con cinco espacios para capturas. En el clon limpio: la operación de ejemplo dio
+  exactamente las salidas del README (bronze 30, silver 30, gold 24; fila de Patilla
+  `2090.00`; lote corrupto con exit 1 y silver intacto), 119 pruebas pasaron y el dashboard
+  respondió `ok`. Los mensajes de "puerto ocupado", "no resuelve `db`" y "contraseña" también
+  los vi en una ejecución real. **No verificado:** el paso de puertos del README se ejecutó con
+  el *override*, no literalmente, por el choque con tu proyecto. Las **capturas** del informe las
+  debes tomar tú, de tu propia máquina: son la evidencia de tu entorno.
 - **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
 
-### T6 a T12
+### T7 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).
