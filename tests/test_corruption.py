@@ -85,6 +85,40 @@ def test_schema_stays_the_same_text_columns():
     assert list(out.columns) == list(_clean().columns)
 
 
+def _with_prices(minimo: str, maximo: str, medio: str, n: int = 4) -> pd.DataFrame:
+    df = _clean().head(n).copy()
+    df["precio_m_nimo"], df["precio_m_ximo"], df["precio_medio"] = minimo, maximo, medio
+    return df
+
+
+def test_decimal_prices_keep_their_decimals_when_scaled():
+    out = corrupt(_with_prices("2000.5", "2090.5", "2050.5"), ["unit_error"])
+    assert set(out["precio_medio"]) == {"20505"}
+    out = corrupt(_with_prices("1.25", "1.25", "12.25"), ["typo_zeros"], fraction=1.0)
+    assert set(out["precio_medio"]) == {"1225"}
+
+
+def test_negative_keeps_the_decimals_of_the_original_price():
+    out = corrupt(_with_prices("2000.5", "2090.5", "2050.5"), ["negative"], fraction=1.0)
+    assert set(out["precio_medio"]) == {"-2050.5"}
+
+
+def test_min_gt_max_without_any_eligible_row_fails_loudly():
+    with pytest.raises(ValueError, match="eligible"):
+        corrupt(_with_prices("100", "100", "100"), ["min_gt_max"])
+
+
+def test_min_gt_max_never_touches_rows_with_missing_prices():
+    df = _with_prices("100", "200", "150", n=6)
+    df.loc[0, "precio_m_nimo"] = None
+    df.loc[1, "precio_m_ximo"] = None
+    out = corrupt(df, ["min_gt_max"], fraction=1.0)
+    assert pd.isna(out.loc[0, "precio_m_nimo"]) and out.loc[0, "precio_m_ximo"] == "200"
+    assert out.loc[1, "precio_m_nimo"] == "100" and pd.isna(out.loc[1, "precio_m_ximo"])
+    swapped = out.loc[2:, ["precio_m_nimo", "precio_m_ximo"]]
+    assert (swapped["precio_m_nimo"] == "200").all() and (swapped["precio_m_ximo"] == "100").all()
+
+
 def test_unknown_kind_is_rejected_with_the_valid_options():
     with pytest.raises(ValueError, match="unknown corruption") as err:
         corrupt(_clean(), ["gremlins"])

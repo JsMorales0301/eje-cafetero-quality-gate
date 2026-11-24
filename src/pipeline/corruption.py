@@ -24,10 +24,18 @@ def _pick(df: pd.DataFrame, rng: np.random.Generator, fraction: float,
     return pd.Index(rng.choice(pool, size=n, replace=False))
 
 
+def _format_price(value: float) -> Optional[str]:
+    """Price as text: integers without a decimal point, otherwise up to 2 decimals."""
+    if pd.isna(value):
+        return None
+    if float(value).is_integer():
+        return str(int(value))
+    return f"{value:.2f}".rstrip("0").rstrip(".")
+
+
 def _scaled(series: pd.Series, factor: float) -> pd.Series:
     """Multiply a text price column, keeping it as text and keeping missing values."""
-    numeric = pd.to_numeric(series, errors="coerce") * factor
-    return numeric.map(lambda v: None if pd.isna(v) else str(int(round(v))))
+    return (pd.to_numeric(series, errors="coerce") * factor).map(_format_price)
 
 
 def nulls(df, rng, fraction):
