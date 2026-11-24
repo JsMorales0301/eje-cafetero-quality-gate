@@ -120,8 +120,18 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 def main(argv: Sequence[str]) -> int:
     args = parse_args(argv)
-    result = run_pipeline(get_engine(), source=args.source, corrupt=args.corrupt,
-                          seed=args.seed, limit=row_limit_from_env())
+    try:
+        limit = row_limit_from_env()
+        engine = get_engine()
+    except Exception as exc:  # noqa: BLE001 - misconfiguration must not look like a gate failure
+        detail = (f"missing environment variable {exc.args[0]}" if isinstance(exc, KeyError)
+                  else f"{type(exc).__name__}: {exc}")
+        print(f"STAGE config FAILED {detail}")
+        print(f"RESULT FAILED stage=config exit={EXIT_ERROR}")
+        return EXIT_ERROR
+
+    result = run_pipeline(engine, source=args.source, corrupt=args.corrupt,
+                          seed=args.seed, limit=limit)
     if result.exit_code == EXIT_OK:
         print(f"RESULT OK bronze={result.bronze_rows} silver={result.silver_rows} "
               f"gold={result.gold_rows}")

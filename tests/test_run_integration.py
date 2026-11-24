@@ -2,7 +2,7 @@
 import pytest
 from sqlalchemy import text
 
-from pipeline.run import EXIT_GATE_FAILED, EXIT_OK, EXIT_ERROR, parse_args, run_pipeline
+from pipeline.run import EXIT_ERROR, EXIT_GATE_FAILED, EXIT_OK, main, parse_args, run_pipeline
 
 
 @pytest.fixture(autouse=True)
@@ -61,6 +61,20 @@ def test_unknown_corruption_kind_is_an_error_not_a_gate_failure(engine):
     assert result.exit_code == EXIT_ERROR
     assert result.failed_stage == "corrupt"
     assert _count(engine, "bronze.precios_raw") == 0  # nothing was loaded
+
+
+def test_main_maps_outcomes_to_exit_codes_and_result_line(engine, monkeypatch, capsys):
+    """main() end to end: the exit code and the RESULT line are what CI reads."""
+    monkeypatch.setattr("pipeline.run.get_engine", lambda: engine)
+
+    assert main(["--source", "fixture"]) == EXIT_OK
+    assert "RESULT OK bronze=30 silver=30 gold=" in capsys.readouterr().out
+
+    assert main(["--source", "fixture", "--corrupt", "duplicates"]) == EXIT_GATE_FAILED
+    assert "RESULT FAILED stage=quality_gate exit=1" in capsys.readouterr().out
+
+    assert main(["--source", "fixture", "--corrupt", "gremlins"]) == EXIT_ERROR
+    assert "RESULT FAILED stage=corrupt exit=2" in capsys.readouterr().out
 
 
 def test_parse_args_defaults_and_corruption_list():

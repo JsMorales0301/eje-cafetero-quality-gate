@@ -42,7 +42,12 @@ def run_ingest(url: str, limit: Optional[int] = DEFAULT_ROW_LIMIT) -> tuple[str,
 
 def row_limit_from_env() -> Optional[int]:
     raw = os.environ.get("SOCRATA_ROW_LIMIT", str(DEFAULT_ROW_LIMIT))
-    return None if raw.lower() == "all" else int(raw)
+    if raw.lower() == "all":
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(f"SOCRATA_ROW_LIMIT must be an integer or 'all', got {raw!r}") from None
 
 
 def main() -> int:
