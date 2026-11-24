@@ -1,0 +1,33 @@
+{
+  "description": "Expected result of `python -m pipeline.run --source fixture` on the 30-row sample. Computed independently of the SQL, with pandas, grouping by product, city and the month of the start date.",
+  "source": "fixture",
+  "rows": {
+    "bronze_latest_batch": 30,
+    "silver": 30,
+    "gold_monthly": 24
+  },
+  "quality_gate_passed": true,
+  "samples": [
+    {
+      "producto": "Patilla",
+      "ciudad": "Pereira",
+      "mes": "2024-03-01",
+      "precio_promedio": "2090.00",
+      "observaciones": 1
+    },
+    {
+      "producto": "Guayaba pera",
+      "ciudad": "Pereira",
+      "mes": "2023-10-01",
+      "precio_promedio": "2340.50",
+      "observaciones": 2
+    },
+    {
+      "producto": "Tangelo",
+      "ciudad": "Pereira",
+      "mes": "2023-04-01",
+      "precio_promedio": "2168.00",
+      "observaciones": 2
+    }
+  ]
+}
