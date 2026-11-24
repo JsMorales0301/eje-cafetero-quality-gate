@@ -161,6 +161,31 @@ autor omite la revisión de un cambio, se anota que se omitió.
     fixture usa `fecha_final = fecha_inicial`, así que la prueba "la semana pertenece al mes de
     su fecha inicial" no ejercita una semana que cruce de mes y pasaría igual si se agrupara
     por fecha final. La convención está implementada, pero esa prueba no la demuestra.
+- **Prompt de corrección (nuevo prompt, a partir de la revisión de Gentle AI):** Corrige los
+  tres hallazgos informativos de la revisión de T3. Haz que el fixture tenga una semana que
+  cruce de mes y demuestra con una mutación (agrupar por fecha final) que la prueba ahora
+  discrimina. Agrega pruebas para el promedio previo en cero y para que un fallo a mitad de
+  la reconstrucción deje intacto el gold anterior. No agregues una guarda de "el último gate
+  pasó": comprueba en su lugar que silver rechaza nulos.
+  - **Qué falló o faltó:** el hallazgo sobre la prueba de la semana era correcto y era un error
+    mío. Durante la mutación hice un `git stash` innecesario y escribí un archivo temporal en
+    `/tmp`; no dejaron residuos y lo revertí. Al refactorizar el fixture cambié sin necesidad
+    el rango mínimo/máximo (de medio ± 10 a igual al medio), lo que la revisión señaló; lo
+    restauré.
+  - **Cómo lo reformulé:** la semana del 29 de enero ahora termina el 3 de febrero
+    (`fecha_final = fecha_inicial + 5 días`, como en los datos reales).
+  - **Resultado final:** con la mutación (agrupar por fecha final) fallan 3 pruebas; con la
+    implementación real pasan. Las pruebas del promedio previo en cero, del rollback de gold y
+    de que silver rechaza nulos se escribieron sobre comportamiento que ya existía, así que
+    pasaron a la primera: son pruebas de caracterización, no de un defecto nuevo. No agregué
+    la guarda del gate porque bloquearía reconstruir gold tras un lote rechazado, aunque silver
+    siga siendo bueno. 55 pruebas pasan.
+  - **Revisión (Gentle AI):** candidato parcial (1 archivo, 26 líneas; solo el arreglo del
+    fixture). Consentí la revisión; una lente, *reliability*; **aprobada** sin bloqueantes. Dos
+    observaciones menores: el cambio del rango mínimo/máximo (restaurado) y que el comentario
+    de la prueba menciona el resultado por fecha final pero solo se afirma el de fecha inicial,
+    lo que el revisor juzgó suficiente. Las pruebas añadidas después de esa revisión no se
+    volvieron a revisar.
 
 ### T4 a T12
 
