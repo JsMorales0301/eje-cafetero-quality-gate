@@ -22,7 +22,7 @@ Everything under this repository. Push, PR creation and merge stay with the user
 
 ## Scenario 3 tasks
 - [x] T1 `feat/bronze-extraction`: extractor (paginated Socrata CSV, pinned window), bronze loader with batch metadata, fixture CSV, unit tests. Check: bronze row count == source count.
-- [ ] T2 `feat/silver-quality-gate`: Great Expectations suite (nulls, types, price > 0, min <= medio <= max, parseable dates, valid categories, duplicates), silver transform (Spanish dates, casts, normalization), gate blocks silver on failure, writes `meta.quality_runs`. Check: clean batch passes, corrupted batch is rejected.
+- [x] T2 `feat/silver-quality-gate`: Great Expectations suite (nulls, types, price > 0, min <= medio <= max, parseable dates, valid categories, duplicates), silver transform (Spanish dates, casts, normalization), gate blocks silver on failure, writes `meta.quality_runs`. Check: clean batch passes, corrupted batch is rejected.
 - [ ] T3 `feat/gold-aggregates`: `gold.precio_mensual` and `gold.variacion_mensual`. Check: known product/city/month matches a hand-computed value.
 - [ ] T4 `feat/pipeline-cli`: `python -m pipeline.run` orchestrator, `--source clean|corrupted`, corruption injector (nulls, duplicates, price x10, min>max, bad dates, negatives). Check: example operation prints the expected result.
 - [ ] T5 `feat/dashboard`: Streamlit on gold + last quality-gate status, plus a "what a corrupted batch would have shown" comparison. Check: container serves on 8501.
@@ -46,4 +46,10 @@ T1 done on `feat/bronze-extraction`: RED observed (import errors), GREEN 12/12 i
 live ingest of 5000 rows matched the source window and bronze count. Route: inline.
 
 ## Next step
-Open PR for T1, then start T2 `feat/silver-quality-gate`.
+T1 merged (PR #1). T2 done on `feat/silver-quality-gate`: RED observed, 43 tests GREEN,
+gate accepts all 83,813 real rows, rejects corrupted batches end to end (exit 1, silver kept).
+Known limitation: only-precio_maximo x10 is not detected. Route: inline.
+Decision: silver holds the last approved batch (TRUNCATE + load); duplicates are flagged by
+the gate, not removed by silver.
+
+Next: open PR for T2, then T3 `feat/gold-aggregates`.

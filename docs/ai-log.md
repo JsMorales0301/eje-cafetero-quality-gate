@@ -55,7 +55,32 @@ completan los otros tres campos.
   Ingesta real contra la API: 5000 filas en bronze con el mismo conteo que el origen
   (`bronze OK ... rows=5000`). Las fechas y precios quedan como texto crudo.
 
-### T2 a T12
+### T2: silver y quality gate (`feat/silver-quality-gate`)
+
+- **Prompt inicial:** Implementa la capa silver y el quality gate con Great Expectations.
+  Parsea las fechas en español, tipa los precios y valida nulos, tipos, rangos de precio,
+  orden mínimo <= medio <= máximo, orden de fechas, categorías y ciudades válidas, claves
+  duplicadas y un promedio plausible del lote. Si el lote no pasa, no debe tocar silver y
+  debe quedar registrado en `meta.quality_runs`. Silver refleja el último lote aprobado.
+  Calibra las reglas contra los datos reales y verifica con un lote limpio (pasa) y con
+  lotes corruptos (rechazados).
+- **Qué falló o faltó:** (1) Great Expectations 1.25 lanzó `DataContextRequiredError`: la suite
+  necesita un contexto activo antes de agregar expectativas, y mi código lo creaba después.
+  (2) Una prueba mía se llamaba "x10" pero multiplicaba por 1000; al corregirla a x10, el
+  fixture de 30 filas (productos baratos) no superaba el umbral de media del lote.
+  (3) Al perfilar el gate contra datos reales encontré un punto ciego: multiplicar solo
+  `precio_maximo` por 10 no se detecta.
+- **Cómo lo reformulé:** creé el contexto antes de la suite; renombré y ajusté la prueba a
+  lo que el fixture demuestra (x100) y verifiqué x10 aparte con el lote real de 5000 filas;
+  dejé el punto ciego como prueba documentada en vez de inventar una regla ajustada a ojo.
+- **Resultado final:** 43 pruebas pasan. El gate acepta las 83.813 filas reales (0 falsos
+  positivos) y rechaza nulos, duplicados, categorías inválidas, precios fuera de rango,
+  orden mínimo/medio/máximo y error de unidad en todo el lote. Prueba de punta a punta:
+  lote limpio -> `quality gate PASSED`, 5000 filas en silver; lote corrupto -> `FAILED`
+  (`key_unique`, `batch_mean.precio_medio`), exit code 1, silver intacto y ambas ejecuciones
+  en `meta.quality_runs`.
+
+### T3 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T1.
 
