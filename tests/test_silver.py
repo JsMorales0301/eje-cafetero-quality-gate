@@ -28,7 +28,7 @@ def test_parse_spanish_date_invalid_is_nat(text):
 
 
 def _bronze_sample() -> pd.DataFrame:
-    return pd.read_csv("tests/fixtures/precios_sample.csv", dtype=str)
+    return pd.read_csv("data/sample/precios_sample.csv", dtype=str)
 
 
 def test_candidate_has_typed_normalized_columns():

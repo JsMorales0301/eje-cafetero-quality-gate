@@ -187,7 +187,81 @@ autor omite la revisión de un cambio, se anota que se omitió.
     lo que el revisor juzgó suficiente. Las pruebas añadidas después de esa revisión no se
     volvieron a revisar.
 
-### T4 a T12
+- **Revisión omitida:** el candidato de la rama completa de T3 contra `main` (4 archivos,
+  294 líneas), que incluía las pruebas agregadas después de la última revisión, no se revisó:
+  Gentle AI pidió consentimiento y elegí **omitir**.
+
+### T4: orquestador y corrupción controlada (`feat/pipeline-cli`)
+
+- **Prompt inicial:** Implementa `python -m pipeline.run`, que encadena extracción, bronze,
+  quality gate, silver y gold, e informa en qué etapa falló y con qué código de salida (0 ok,
+  1 el gate rechazó el lote, 2 otro error). Agrega una opción de origen (datos reales o la
+  muestra local determinista) y un inyector de corrupción controlada y reproducible (nulos,
+  duplicados, error de unidad, ceros de más, precios negativos, mínimo mayor que máximo,
+  fechas inválidas, categoría mal escrita). Escribe primero las pruebas y demuestra que un lote
+  corrupto no llega a silver ni a gold.
+- **Qué falló o faltó:** las pruebas pasaron completas (83) a la primera tras implementar, y el
+  RED inicial fue solo por módulos inexistentes. Tres desvíos que conviene saber: (1) en el plan
+  había escrito `--source clean|corrupted`; al diseñarlo vi que mezclaba dos ideas (de dónde
+  vienen los datos y si se corrompen), así que quedó `--source live|fixture` más `--corrupt`.
+  (2) El error de unidad (todos los precios x10) no se detecta en la muestra de 30 filas
+  (su media es baja), solo en un lote realista; por eso su prueba es estructural y su detección
+  se verificó aparte con 5000 filas reales. (3) Para las reglas de orden de precios, el reporte
+  del gate muestra `unexpected=None`: GX no entrega el conteo de filas en esas expectativas.
+- **Cómo lo reformulé:** moví la muestra de `tests/fixtures/` a `data/sample/`, porque el código
+  de producción no debe leer de `tests/`, y separé `ingest` en extraer y cargar para reutilizarlo.
+- **Resultado final:** 83 pruebas pasan. Con datos reales por CLI: lote limpio de 5000 filas ->
+  `RESULT OK bronze=5000 silver=5000 gold=1299`, exit 0; error de unidad -> el gate lo rechaza
+  (`batch_mean.precio_medio` = 53.452), exit 1; nulos + duplicados + ceros de más -> 5 reglas
+  falladas, exit 1; tipo de corrupción inexistente -> `failed stage=corrupt`, exit 2. Tras los
+  lotes rechazados, silver sigue con el lote limpio (1 lote, 5000 filas) y gold con 1.299, y
+  `meta.quality_runs` guarda cada ejecución.
+- **Revisión (Gentle AI):** riesgo medio (15 archivos, 561 líneas; la evidencia señaló el CSV
+  de muestra, que solo se movió de carpeta). Consentí la revisión. Una lente aplicada:
+  *reliability*. Resultado: **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos,
+  aún sin atender:
+  - *WARNING* (`src/pipeline/run.py:121-122`): `main()` calcula el límite de filas y crea la
+    conexión **fuera** del bloque que informa la etapa. Un `SOCRATA_ROW_LIMIT` inválido o una
+    configuración de base de datos ausente producen un traceback sin etapa y con **exit 1**, el
+    mismo código que significa "el gate rechazó el lote". Esto contradice el contrato de códigos
+    de salida que documenté y que Jenkins usará para distinguir fallos. **El revisor tiene
+    razón.**
+  - *SUGGESTION* (`src/pipeline/run.py`): ninguna prueba ejecuta `main()` de punta a punta, así
+    que una regresión en el mapeo de códigos de salida o en la línea `RESULT` pasaría inadvertida.
+  - *SUGGESTION* (`src/pipeline/corruption.py`): casos límite sin probar: `min_gt_max` cuando
+    ningún lote tiene mínimo < máximo (falla con `ValueError`, exit 2), comparaciones con NaN,
+    y `_scaled` descarta decimales en precios no enteros.
+- **Prompt de corrección (nuevo prompt, a partir de la revisión de Gentle AI):** Corrige los
+  tres hallazgos informativos de la revisión de T4. Un error de configuración (límite de filas
+  inválido o variable de base de datos ausente) debe salir con exit 2 y nombrar su etapa, nunca
+  con exit 1, que solo significa "el gate rechazó el lote". Agrega una prueba de `main()` de
+  punta a punta para los códigos 0, 1 y 2 y la línea `RESULT`. Cubre los casos límite del
+  inyector (sin filas elegibles, NaN, decimales) y corrige lo que falle. Escribe primero las
+  pruebas.
+  - **Qué falló o faltó:** el hallazgo principal era un error real de mi diseño: el contrato de
+    códigos de salida que documenté no se cumplía antes de la primera etapa. Además, mi segunda
+    demostración por CLI no valió: usé `POSTGRES_USER=` vacío, que no equivale a "ausente", y
+    corrí con una imagen vieja que aún no tenía la muestra en `data/sample/`. Esa ausencia ya
+    la cubre la prueba unitaria; la imagen reconstruida corre el flujo sin montar nada.
+  - **Cómo lo reformulé:** moví la lectura del límite y la conexión a un bloque propio con etapa
+    `config`; `SOCRATA_ROW_LIMIT` inválido da un mensaje claro y la variable ausente se nombra
+    explícitamente. Los precios con decimales se formatean sin perder precisión.
+  - **Resultado final:** de las pruebas nuevas, 3 fallaron primero (RED): los dos errores de
+    configuración y el precio negativo con decimales (`-2050.5` salía como `-2050`). El resto
+    (`main()` de punta a punta, casos límite de `min_gt_max`, NaN) se escribió sobre
+    comportamiento que ya existía y pasó a la primera: son pruebas de caracterización. Ahora
+    90 pruebas pasan; con `SOCRATA_ROW_LIMIT=abc` el CLI devuelve
+    `RESULT FAILED stage=config exit=2`.
+  - **Revisión (Gentle AI):** riesgo medio (16 archivos, 692 líneas; la rama completa de T4,
+    incluida esta corrección). Consentí la revisión. Una lente aplicada: *reliability*.
+    Resultado: **aprobada**, sin hallazgos bloqueantes y con una sola observación, aún sin
+    atender: *SUGGESTION* (`src/pipeline/run.py:68-70`): un tipo de corrupción inexistente solo
+    se rechaza dentro de la etapa `corrupt`, es decir, después de extraer; con `--source live`,
+    un error de tipeo en `--corrupt` descarga primero toda la ventana de la API y recién
+    entonces sale con exit 2. Validar los tipos al inicio ahorraría esa llamada de red. El
+    comportamiento es correcto y está probado; es solo una mejora de robustez.
+
+### T5 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).

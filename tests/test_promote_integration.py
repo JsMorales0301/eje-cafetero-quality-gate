@@ -8,7 +8,7 @@ from pipeline.promote import promote_batch
 
 
 def _fixture() -> pd.DataFrame:
-    return pd.read_csv("tests/fixtures/precios_sample.csv", dtype=str)
+    return pd.read_csv("data/sample/precios_sample.csv", dtype=str)
 
 
 def _cleanup(engine, *batches):
