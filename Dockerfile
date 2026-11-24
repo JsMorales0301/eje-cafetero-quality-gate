@@ -13,6 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src ./src
 COPY sql ./sql
 COPY tests ./tests
+# The CI files, so the tests that check them also run inside the container.
+COPY Jenkinsfile docker-compose.ci.yml .gitignore ./
 COPY data ./data
 
 # Run as a non-root user.

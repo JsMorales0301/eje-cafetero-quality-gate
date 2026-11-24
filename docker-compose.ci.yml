@@ -1,0 +1,8 @@
+# Used only by Jenkins (see the Jenkinsfile), layered over docker-compose.yml.
+# It publishes no host ports: a build never collides with a developer's containers on 5433 or
+# 8501, and nothing in the build is reachable from outside its own Compose network.
+services:
+  db:
+    ports: !reset []
+  app:
+    ports: !reset []
