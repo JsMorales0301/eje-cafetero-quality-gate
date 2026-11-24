@@ -252,7 +252,14 @@ autor omite la revisión de un cambio, se anota que se omitió.
     comportamiento que ya existía y pasó a la primera: son pruebas de caracterización. Ahora
     90 pruebas pasan; con `SOCRATA_ROW_LIMIT=abc` el CLI devuelve
     `RESULT FAILED stage=config exit=2`.
-  - **Revisión (Gentle AI):** esta corrección no se ha revisado todavía.
+  - **Revisión (Gentle AI):** riesgo medio (16 archivos, 692 líneas; la rama completa de T4,
+    incluida esta corrección). Consentí la revisión. Una lente aplicada: *reliability*.
+    Resultado: **aprobada**, sin hallazgos bloqueantes y con una sola observación, aún sin
+    atender: *SUGGESTION* (`src/pipeline/run.py:68-70`): un tipo de corrupción inexistente solo
+    se rechaza dentro de la etapa `corrupt`, es decir, después de extraer; con `--source live`,
+    un error de tipeo en `--corrupt` descarga primero toda la ventana de la API y recién
+    entonces sale con exit 2. Validar los tipos al inicio ahorraría esa llamada de red. El
+    comportamiento es correcto y está probado; es solo una mejora de robustez.
 
 ### T5 a T12
 
