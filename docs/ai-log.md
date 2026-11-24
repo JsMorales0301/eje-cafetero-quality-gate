@@ -187,7 +187,38 @@ autor omite la revisión de un cambio, se anota que se omitió.
     lo que el revisor juzgó suficiente. Las pruebas añadidas después de esa revisión no se
     volvieron a revisar.
 
-### T4 a T12
+- **Revisión omitida:** el candidato de la rama completa de T3 contra `main` (4 archivos,
+  294 líneas), que incluía las pruebas agregadas después de la última revisión, no se revisó:
+  Gentle AI pidió consentimiento y elegí **omitir**.
+
+### T4: orquestador y corrupción controlada (`feat/pipeline-cli`)
+
+- **Prompt inicial:** Implementa `python -m pipeline.run`, que encadena extracción, bronze,
+  quality gate, silver y gold, e informa en qué etapa falló y con qué código de salida (0 ok,
+  1 el gate rechazó el lote, 2 otro error). Agrega una opción de origen (datos reales o la
+  muestra local determinista) y un inyector de corrupción controlada y reproducible (nulos,
+  duplicados, error de unidad, ceros de más, precios negativos, mínimo mayor que máximo,
+  fechas inválidas, categoría mal escrita). Escribe primero las pruebas y demuestra que un lote
+  corrupto no llega a silver ni a gold.
+- **Qué falló o faltó:** las pruebas pasaron completas (83) a la primera tras implementar, y el
+  RED inicial fue solo por módulos inexistentes. Tres desvíos que conviene saber: (1) en el plan
+  había escrito `--source clean|corrupted`; al diseñarlo vi que mezclaba dos ideas (de dónde
+  vienen los datos y si se corrompen), así que quedó `--source live|fixture` más `--corrupt`.
+  (2) El error de unidad (todos los precios x10) no se detecta en la muestra de 30 filas
+  (su media es baja), solo en un lote realista; por eso su prueba es estructural y su detección
+  se verificó aparte con 5000 filas reales. (3) Para las reglas de orden de precios, el reporte
+  del gate muestra `unexpected=None`: GX no entrega el conteo de filas en esas expectativas.
+- **Cómo lo reformulé:** moví la muestra de `tests/fixtures/` a `data/sample/`, porque el código
+  de producción no debe leer de `tests/`, y separé `ingest` en extraer y cargar para reutilizarlo.
+- **Resultado final:** 83 pruebas pasan. Con datos reales por CLI: lote limpio de 5000 filas ->
+  `RESULT OK bronze=5000 silver=5000 gold=1299`, exit 0; error de unidad -> el gate lo rechaza
+  (`batch_mean.precio_medio` = 53.452), exit 1; nulos + duplicados + ceros de más -> 5 reglas
+  falladas, exit 1; tipo de corrupción inexistente -> `failed stage=corrupt`, exit 2. Tras los
+  lotes rechazados, silver sigue con el lote limpio (1 lote, 5000 filas) y gold con 1.299, y
+  `meta.quality_runs` guarda cada ejecución.
+- **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
+
+### T5 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).
