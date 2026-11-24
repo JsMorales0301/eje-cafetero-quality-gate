@@ -365,6 +365,35 @@ autor omite la revisión de un cambio, se anota que se omitió.
   `localhost:8501`; 119 pruebas pasan. Cierra el pendiente de T6 sobre el paso de puertos.
 - **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
 
+### Ampliación del informe: APA 7, conceptos y contraste (`chore/clean-clone-validation`)
+
+- **Prompt inicial (mío, textual):** "Revisa los requisitos de la entrega, tiene que ir en APA,
+  coloquemos una sección donde expliquemos los conceptos de ingeniería de datos para que se
+  entienda y cómo hace contraste el CI con el data ops".
+- **Qué falló o faltó:** (1) Al releer las guías, el documento del Escenario 3 **no pide APA de
+  forma explícita**; sí lo pide el Escenario 5 ("fuentes oficiales en APA 7"), y la lista de
+  "Material de consulta" de cada guía está en APA. Se aplicó APA 7 de todos modos y se dejó una
+  marca para confirmarlo con la docente. (2) La búsqueda web no devolvió el sitio oficial del
+  DataOps Manifesto, solo resúmenes de terceros; en lugar de citar principios de memoria, se
+  leyeron las páginas primarias de cada fuente. (3) Al leer el artículo de Fowler, la herramienta
+  avisó de que parte de su contenido era un resumen no verificado; solo se usó lo leído
+  textualmente (la definición y los títulos de las prácticas). (4) Se descartó una fuente
+  (Ereth, 2018) porque no se pudo confirmar el nombre del autor. (5) Un script de comprobación
+  mío falló por un error de formato en su última línea; no afectó al documento. (6) El formato
+  no se pudo ver renderizado: se verificó leyendo la estructura del archivo.
+- **Cómo lo reformulé:** cada afirmación atribuida a una fuente se apoya en lo verificado en su
+  página primaria, y las interpretaciones propias se señalan como tales en el texto; el
+  manifiesto se describe como documento de practicantes, creado y mantenido por una empresa, y se
+  contrasta con un artículo arbitrado (Munappy et al., 2020).
+- **Resultado final:** el informe ahora tiene portada y formato APA 7 (Times New Roman 12, doble
+  espacio, sangría de primera línea, encabezados de nivel 1 centrados y en negrita, número de
+  página arriba a la derecha, figuras y tablas rotuladas, referencias con sangría francesa), una
+  sección de conceptos de ingeniería de datos, un contraste entre integración continua y DataOps
+  con su relación con el proyecto, y 8 fuentes que corresponden una a una con sus citas.
+  Plantilla de formato: `docs/apa-reference.docx`. Para regenerar el Word:
+  `pandoc docs/informe-escenario-3.md -o docs/informe-escenario-3.docx --reference-doc=docs/apa-reference.docx --resource-path=docs`.
+- **Revisión (Gentle AI):** pendiente.
+
 ### T8 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
