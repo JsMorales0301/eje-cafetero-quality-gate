@@ -149,7 +149,18 @@ autor omite la revisión de un cambio, se anota que se omitió.
   half-up; solo 1 fila difiere del redondeo en float de numpy, que es otra convención.
   Convenciones: una semana pertenece al mes de su fecha inicial, y la variación se mide contra
   el mes calendario anterior (nula si ese mes no tiene datos).
-- **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
+- **Revisión (Gentle AI):** riesgo medio (4 archivos, 222 líneas; cambio ejecutable en
+  `src/pipeline/gold.py`). Consentí la revisión. Una lente aplicada: *reliability*. Resultado:
+  **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos, aún sin atender:
+  - *WARNING* (`src/pipeline/gold.py:20-30`): gold asume que silver no tiene nulos y se
+    reconstruye sin comprobar que el último gate pasó; tampoco hay prueba de que un fallo a
+    mitad de la reconstrucción deje intacto el gold anterior.
+  - *SUGGESTION* (`src/pipeline/gold.py:44-47`): la rama en la que el promedio del mes anterior
+    es 0 (variación nula por la guarda) no tiene prueba.
+  - *SUGGESTION* (`tests/test_gold_integration.py:33-36`): **el revisor tiene razón.** Mi
+    fixture usa `fecha_final = fecha_inicial`, así que la prueba "la semana pertenece al mes de
+    su fecha inicial" no ejercita una semana que cruce de mes y pasaría igual si se agrupara
+    por fecha final. La convención está implementada, pero esa prueba no la demuestra.
 
 ### T4 a T12
 
