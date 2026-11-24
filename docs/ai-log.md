@@ -332,9 +332,40 @@ autor omite la revisión de un cambio, se anota que se omitió.
   los vi en una ejecución real. **No verificado:** el paso de puertos del README se ejecutó con
   el *override*, no literalmente, por el choque con tu proyecto. Las **capturas** del informe las
   debes tomar tú, de tu propia máquina: son la evidencia de tu entorno.
+- **Revisión (Gentle AI):** **omitida.** Riesgo medio (7 archivos, 446 líneas; la evidencia señaló
+  una línea nueva en `.gitignore`). Gentle AI pidió consentimiento para la rama de T6, que es casi
+  toda documentación, y elegí **omitir**. La afirmación más frágil de esa rama, el README, se
+  verificó después ejecutándolo (ver T7).
+
+### T7: validación final en carpeta limpia (`chore/clean-clone-validation`)
+
+- **Prompt inicial:** Valida el Escenario 3 desde cero, como lo haría la docente: clona el
+  repositorio público desde GitHub sin mis credenciales, comprueba que no haya secretos en los
+  archivos ni en el historial, y sigue el README al pie de la letra, ejecutando cada comando
+  exactamente como está escrito, para que se levante solo con el README. Luego compara cada
+  resultado con lo que el README promete.
+- **Qué falló o faltó:** (1) Mis contenedores en ejecución ocupaban los puertos 5433 y 8501, así
+  que en T6 el paso de puertos no se pudo ejecutar literalmente; pedí permiso y apagué tus
+  contenedores (`docker compose down`, sin `-v`, sin tocar tus datos) para poder hacerlo.
+  (2) Si hubiera clonado en la carpeta con el nombre por defecto, Compose habría reutilizado
+  tu volumen y la corrida habría reemplazado tus datos; por eso clonó en una carpeta con otro
+  nombre, lo único que difiere del README. (3) Al revisar el informe encontré una afirmación mía
+  que no podía sostener: que Great Expectations 1.x "no está disponible en versiones más nuevas
+  de Python"; solo comprobé que con el Python 3.15 de tu equipo `pip` ofrece la 0.18.
+- **Cómo lo reformulé:** cada comando se ejecuta solo si aparece textualmente en el README, para
+  no transcribirlo mal; el informe ahora dice exactamente lo que se observó.
+- **Resultado final:** desde GitHub, sin credenciales: el repositorio es público (página 200,
+  `ls-remote` y `clone` anónimos); `.env` no está versionado ni lo estuvo nunca; el barrido de
+  todo el historial no encontró contraseñas, tokens ni claves (solo el valor de ejemplo de
+  `.env.example`); los 6 commits de un segundo nombre de autor son los 6 merges de PR. Los
+  diagramas Mermaid y las tablas del README se dibujan bien en GitHub. Con el README al pie de la
+  letra: `db` sano con el puerto 5433 publicado; operación de ejemplo (`bronze=30 silver=30
+  gold=24`, Patilla `2090.00`, bloque idéntico al del README); lote corrupto con exit 1 y silver
+  intacto; datos reales `bronze=5000 silver=5000 gold=1299`; dashboard respondiendo en
+  `localhost:8501`; 119 pruebas pasan. Cierra el pendiente de T6 sobre el paso de puertos.
 - **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
 
-### T7 a T12
+### T8 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).

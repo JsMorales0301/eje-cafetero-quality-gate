@@ -40,8 +40,9 @@ ve.
 **Por qué estas imágenes.**
 `postgres:16-alpine` es la imagen oficial de la base de datos: no hay que mantener un Dockerfile
 para ella, y la variante Alpine es pequeña. `python:3.12-slim` es la base del contenedor propio:
-se fijó la versión 3.12 porque Great Expectations 1.x no está disponible en versiones más nuevas
-de Python (se comprobó al instalar), y `slim` evita paquetes que no se usan. El contenedor corre
+se fijó la versión 3.12 porque con el Python 3.15 de mi equipo `pip` solo ofrecía Great
+Expectations 0.18, mientras que con 3.12 ofrece la 1.25 que usa el proyecto (se comprobó
+consultando `pip index versions`), y `slim` evita paquetes que no se usan. El contenedor corre
 con un usuario sin privilegios y las dependencias están fijadas con versión exacta.
 
 ## 4. Cómo se comunican
