@@ -5,6 +5,12 @@ from sqlalchemy import text
 from pipeline.bronze import count_batch, load_bronze, new_batch_id
 
 
+def test_integration_tests_run_on_a_dedicated_database(engine):
+    """Cleanup in these tests truncates tables, so they must never touch the real database."""
+    with engine.connect() as conn:
+        assert conn.execute(text("SELECT current_database()")).scalar_one().endswith("_test")
+
+
 def test_load_bronze_persists_exact_row_count_and_raw_text(engine):
     raw = pd.read_csv("tests/fixtures/precios_sample.csv", dtype=str)
     batch = new_batch_id()
