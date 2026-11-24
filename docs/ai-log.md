@@ -111,8 +111,19 @@ autor omite la revisión de un cambio, se anota que se omitió.
     un fallo de carga queda registrado como `silver_load_error` en `meta.quality_runs`, deja
     silver con el último lote bueno y se vuelve a lanzar. 45 pruebas pasan. Silver real: 5000
     filas antes y después de la suite.
-  - **Revisión (Gentle AI):** esta corrección no se volvió a revisar con Gentle AI; queda sujeta
-    a la revisión del siguiente cambio de riesgo medio o alto, si se concede.
+  - **Revisión (Gentle AI):** riesgo medio (12 archivos, 763 líneas; cambio de configuración en
+    `Dockerfile`). Consentí la revisión. Una lente aplicada: *reliability*. Resultado:
+    **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos, aún sin atender:
+    - *WARNING* (`src/pipeline/promote.py:58-76`): si la carga falla y además falla el registro
+      de auditoría (por ejemplo, se pierde la conexión), el fallo solo se imprime en stderr y no
+      queda fila en `meta.quality_runs`; la brecha de auditoría se cierra solo en parte.
+      Tampoco hay prueba de que reintentar un lote tras un fallo de carga deje dos filas
+      (fallida y luego aprobada).
+    - *SUGGESTION* (`src/pipeline/promote.py:55-60`): ninguna prueba verifica que los tipos
+      (fechas como fechas, manejo de NaN) sobrevivan el viaje a Postgres; solo se comprueban
+      conteos e ids de lote.
+    - *SUGGESTION* (`tests/test_promote_integration.py`): las pruebas de promoción no fijan la
+      fecha de hoy, así que la regla de fechas plausibles depende del reloj real.
 
 ### T3 a T12
 
