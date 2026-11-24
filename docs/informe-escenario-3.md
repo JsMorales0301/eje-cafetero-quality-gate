@@ -3,11 +3,20 @@ title: "Proyecto en dos contenedores comunicados con Docker"
 subtitle: "Escenario 3: pipeline de datos con quality gate (Eje Cafetero)"
 ---
 
-**Autor:** [Tu nombre completo y código]
+**Autor:** [PENDIENTE (TÚ): nombre completo y código]{.mark}
 
 **Curso:** Integración Continua
 
-**Fecha:** [fecha de entrega]
+**Fecha:** [PENDIENTE (TÚ): fecha de entrega]{.mark}
+
+> **Antes de entregar (borra este cuadro).** Todo lo marcado en amarillo lo debes hacer tú:
+>
+> 1. [Tu nombre, código y fecha en esta portada.]{.mark}
+> 2. [Pegar tus 5 capturas de pantalla en la sección 7. Ya está la salida real en texto de cada
+>    comando para que compares, pero las capturas deben salir de tu máquina: son la evidencia de
+>    tu entorno.]{.mark}
+> 3. [Revisar que el enlace del repositorio y la sección 9 (registro de IA) reflejen tu trabajo.]{.mark}
+> 4. [Borrar este cuadro y las instrucciones en amarillo.]{.mark}
 
 ## 1. Repositorio
 
@@ -86,39 +95,103 @@ docker compose run --rm app python -m pipeline.run --source fixture
 
 ## 7. Evidencias
 
-> **Instrucciones (borrar antes de entregar):** reemplaza cada recuadro por una captura real de tu
-> terminal o navegador. Compara con el "resultado esperado" que aparece debajo.
+Para cada evidencia se muestra el comando, la **salida real** obtenida al seguir el README desde
+un clon limpio del repositorio (ver la sección 8) y un espacio marcado para tu captura.
 
-**Captura 1. Contenedores en ejecución.** Comando: `docker compose ps`.
-Debe verse `app` y `db` con estado `Up`, y `db` en `healthy`.
+### Captura 1. Contenedores en ejecución
 
-[PEGAR CAPTURA 1]
+Comando: `docker compose ps`. Deben verse `app` y `db` con estado `Up`, y `db` en `healthy`.
+Salida real (con el formato de tabla corto; en tu máquina los nombres llevarán el de tu carpeta):
 
-**Captura 2. Guardar un dato.** Comando:
-`docker compose run --rm app python -m pipeline.run --source fixture`.
-Resultado esperado: `RESULT OK bronze=30 silver=30 gold=24`.
+```text
+SERVICE   STATUS                    PORTS
+app       Up 2 seconds              127.0.0.1:8501->8501/tcp
+db        Up 37 seconds (healthy)   127.0.0.1:5433->5432/tcp
+```
 
-[PEGAR CAPTURA 2]
+[PENDIENTE (TÚ): pegar aquí tu captura 1 de `docker compose ps`.]{.mark}
 
-**Captura 3. Consultar el dato (los dos contenedores trabajando juntos).** Comando:
-`docker compose exec db psql -U pipeline -d canasta -c "SELECT producto, ciudad, mes, precio_promedio, observaciones FROM gold.precio_mensual WHERE producto = 'Patilla';"`.
-Resultado esperado: una fila, `Patilla | Pereira | 2024-03-01 | 2090.00 | 1`.
+### Captura 2. Guardar un dato
 
-[PEGAR CAPTURA 3]
+Comando: `docker compose run --rm app python -m pipeline.run --source fixture`. Salida real:
 
-**Captura 4. Un lote corrupto es bloqueado.** Comando:
-`docker compose run --rm app python -m pipeline.run --source fixture --corrupt duplicates`.
-Resultado esperado: `RESULT FAILED stage=quality_gate exit=1`.
+```text
+STAGE extract     OK     source=fixture rows=30
+STAGE bronze      OK     batch=20261124T203123Z-73542613 rows=30
+STAGE quality_gate OK     expectations=22 silver_rows=30
+STAGE gold        OK     precio_mensual=24
+RESULT OK bronze=30 silver=30 gold=24
+```
 
-[PEGAR CAPTURA 4]
+[PENDIENTE (TÚ): pegar aquí tu captura 2.]{.mark}
 
-**Captura 5. Dashboard.** Abrir <http://localhost:8501> (con `--source live` cargado) y capturar la
-sección "What would the dashboard show without the gate?" con `typo_zeros`: el gate rechaza el
-lote y las dos tablas de mayores aumentos difieren.
+### Captura 3. Consultar el dato (los dos contenedores trabajando juntos)
 
-[PEGAR CAPTURA 5]
+Comando: `docker compose exec db psql -U pipeline -d canasta -c "SELECT producto, ciudad, mes, precio_promedio, observaciones FROM gold.precio_mensual WHERE producto = 'Patilla';"`. Salida real:
 
-## 8. Registro de uso de IA
+```text
+ producto | ciudad  |    mes     | precio_promedio | observaciones
+----------+---------+------------+-----------------+---------------
+ Patilla  | Pereira | 2024-03-01 |         2090.00 |             1
+(1 row)
+```
+
+[PENDIENTE (TÚ): pegar aquí tu captura 3.]{.mark}
+
+### Captura 4. Un lote corrupto es bloqueado
+
+Comando: `docker compose run --rm app python -m pipeline.run --source fixture --corrupt duplicates`.
+Salida real (el código de salida es 1, y silver conserva sus 30 filas):
+
+```text
+STAGE extract     OK     source=fixture rows=30
+STAGE corrupt     OK     kinds=duplicates seed=42 rows=31
+STAGE bronze      OK     batch=20261124T203125Z-d8448118 rows=31
+STAGE quality_gate FAILED failed=1/22 expectations; silver and gold keep the last approved data
+  - key_unique unexpected=2 observed=None
+RESULT FAILED stage=quality_gate exit=1
+```
+
+[PENDIENTE (TÚ): pegar aquí tu captura 4.]{.mark}
+
+### Captura 5. Dashboard
+
+Con datos reales cargados (`--source live`), el dashboard en <http://localhost:8501> muestra el
+historial del quality gate, los precios por producto y ciudad, y la sección que compara lo que
+se vería con y sin el control. Las cuatro imágenes siguientes son capturas reales de la
+aplicación en ejecución, tomadas durante el desarrollo con 5000 filas reales.
+
+![Historial del quality gate: lotes aprobados y rechazados, con las reglas que fallaron](images/dashboard-quality-gate.jpg)
+
+![Precios mensuales de un producto y ciudad, desde la capa gold](images/dashboard-prices.jpg)
+
+![Con 5 % de filas con ceros de más, el gate rechaza el lote; sin él, aparecerían picos falsos de hasta 200 mil COP](images/dashboard-whatif-chart.jpg)
+
+![Mayores aumentos de precio: con datos aprobados lidera Pitahaya (+54,3 %); sin el gate aparece una falsa alarma de +2.305 % y la Pitahaya desaparece del ranking](images/dashboard-whatif-tables.jpg)
+
+[PENDIENTE (TÚ, opcional): reemplazar estas capturas por unas tuyas, tomadas en tu navegador, para
+que la evidencia sea de tu propio entorno.]{.mark}
+
+## 8. Validación desde una carpeta limpia
+
+Para comprobar que otra persona puede reproducir el trabajo, se siguió el README **al pie de la
+letra**, ejecutando cada comando exactamente como está escrito, sobre un clon del repositorio
+público descargado desde GitHub sin credenciales. Resultado:
+
+| Comprobación | Resultado |
+|---|---|
+| Repositorio público (sin sesión de GitHub) | Sí: la página responde, y `ls-remote` y `clone` funcionan de forma anónima. |
+| Credenciales en el repositorio | Ninguna. `.env` no está versionado ni lo estuvo nunca; un barrido de todo el historial no encontró contraseñas, tokens ni claves (solo el valor de ejemplo de `.env.example`). |
+| `db` sano con el puerto 5433 publicado | Sí. |
+| Operación de ejemplo | `bronze=30 silver=30 gold=24`; la fila de Patilla es idéntica al bloque del README. |
+| Lote corrupto | Termina con código 1 y silver conserva sus 30 filas. |
+| Datos reales | `bronze=5000 silver=5000 gold=1299`. |
+| Dashboard | Responde en `http://localhost:8501`. |
+| Pruebas | 119 pasan. |
+
+El README también se verificó en GitHub: los dos diagramas Mermaid y las tablas se dibujan bien.
+
+## 9. Registro de uso de IA
 
 **Herramienta.** Claude Code Desktop (modelo Claude Sonnet 5.5), configurado con Gentle AI
 (instrucciones, skills y memoria persistente sobre el mismo modelo; no es otro modelo). La
@@ -139,16 +212,25 @@ está en [`docs/ai-log.md`](https://github.com/JsMorales0301/eje-cafetero-qualit
 | T3. Capa gold | Agregados mensuales y variación, comprobados contra pandas. | Una prueba de la semana no demostraba lo que decía. | Aprobada dos veces; la rama final se omitió. |
 | T4. Orquestador | `pipeline.run` con códigos de salida y corrupción reproducible. | Un error de configuración salía con el mismo código que el gate. | Aprobada dos veces. |
 | T5. Dashboard | Streamlit sobre gold con "qué pasaría sin el gate". | Etiquetas superpuestas y tablas cortadas, vistas solo al abrir el navegador. | Se omitió. |
+| T6. README, diagramas e informe | README verificado, diagramas y borrador del informe. | Una afirmación falsa en el README sobre la falta de `.env`; etiquetas de los diagramas que cortaban bordes. | Se omitió. |
+| T7. Validación desde carpeta limpia | Seguir el README al pie de la letra desde GitHub. | Una afirmación del informe sobre Python y Great Expectations que no estaba comprobada. | Riesgo bajo: cerrada sin lentes; el cierre formal (acknowledgement) quedó pendiente. |
 
 **Errores de la IA detectados.** El detalle de cada uno (qué dijo la IA, qué mostró la salida real
 y cómo se corrigió) está en `docs/ai-log.md`. Los más relevantes: una prueba "x10" que en realidad
 multiplicaba por 1000, una comprobación de "silver intacto" que salió débil porque la suite
-anterior ya lo había vaciado, y un contrato de códigos de salida que no se cumplía antes de la
-primera etapa.
+anterior ya lo había vaciado, un contrato de códigos de salida que no se cumplía antes de la
+primera etapa, y una afirmación del README sobre la falta de `.env` que resultó falsa al
+reproducirla.
 
-## 9. Limitaciones
+[PENDIENTE (TÚ): leer esta sección y confirmar que describe fielmente cómo usaste la IA. Si usaste
+otra herramienta o hiciste algo distinto, corrígelo antes de entregar.]{.mark}
+
+## 10. Limitaciones
 
 - El control de calidad no detecta todo: si solo se infla `precio_maximo` conservando el orden y el
   rango plausible, el lote pasa. Un control reduce el riesgo, no lo elimina.
 - Un error de unidad (todos los precios por 10) no se detecta en la muestra de 30 filas, pero sí en
   un lote realista de 5000 filas.
+- Las capturas de pantalla del dashboard (sección 7) se tomaron en el navegador integrado de la
+  herramienta durante el desarrollo; las de terminal no se incluyen como imagen porque deben salir
+  de tu propia máquina.
