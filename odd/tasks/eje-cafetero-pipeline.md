@@ -27,7 +27,7 @@ Everything under this repository. Push, PR creation and merge stay with the user
 - [x] T4 `feat/pipeline-cli`: `python -m pipeline.run` orchestrator, `--source live|fixture` plus `--corrupt KINDS` (changed from `clean|corrupted`: two orthogonal flags), corruption injector (nulls, duplicates, price x10, min>max, bad dates, negatives). Check: example operation prints the expected result.
 - [x] T5 `feat/dashboard`: Streamlit on gold + last quality-gate status, plus a "what a corrupted batch would have shown" comparison. Check: container serves on 8501.
 - [x] T6 (README, diagrams, report draft done and verified in a clean clone; the 5 screenshots are the user's to capture) `docs/readme-and-report`: README (clone-and-run), architecture diagram, screenshots, report, ai-log filled.
-- [ ] T7 `chore/clean-clone-validation`: clone into an empty folder and bring the system up using only the README.
+- [x] T7 `chore/clean-clone-validation`: clone into an empty folder and bring the system up using only the README.
 
 ## Scenario 5 tasks (after Scenario 3 is delivered)
 - [ ] T8 `feat/verify-operation`: standalone verification command that exits non-zero when the result differs from the expected one.

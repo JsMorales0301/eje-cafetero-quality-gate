@@ -332,9 +332,69 @@ autor omite la revisión de un cambio, se anota que se omitió.
   los vi en una ejecución real. **No verificado:** el paso de puertos del README se ejecutó con
   el *override*, no literalmente, por el choque con tu proyecto. Las **capturas** del informe las
   debes tomar tú, de tu propia máquina: son la evidencia de tu entorno.
+- **Revisión (Gentle AI):** **omitida.** Riesgo medio (7 archivos, 446 líneas; la evidencia señaló
+  una línea nueva en `.gitignore`). Gentle AI pidió consentimiento para la rama de T6, que es casi
+  toda documentación, y elegí **omitir**. La afirmación más frágil de esa rama, el README, se
+  verificó después ejecutándolo (ver T7).
+
+### T7: validación final en carpeta limpia (`chore/clean-clone-validation`)
+
+- **Prompt inicial:** Valida el Escenario 3 desde cero, como lo haría la docente: clona el
+  repositorio público desde GitHub sin mis credenciales, comprueba que no haya secretos en los
+  archivos ni en el historial, y sigue el README al pie de la letra, ejecutando cada comando
+  exactamente como está escrito, para que se levante solo con el README. Luego compara cada
+  resultado con lo que el README promete.
+- **Qué falló o faltó:** (1) Mis contenedores en ejecución ocupaban los puertos 5433 y 8501, así
+  que en T6 el paso de puertos no se pudo ejecutar literalmente; pedí permiso y apagué tus
+  contenedores (`docker compose down`, sin `-v`, sin tocar tus datos) para poder hacerlo.
+  (2) Si hubiera clonado en la carpeta con el nombre por defecto, Compose habría reutilizado
+  tu volumen y la corrida habría reemplazado tus datos; por eso clonó en una carpeta con otro
+  nombre, lo único que difiere del README. (3) Al revisar el informe encontré una afirmación mía
+  que no podía sostener: que Great Expectations 1.x "no está disponible en versiones más nuevas
+  de Python"; solo comprobé que con el Python 3.15 de tu equipo `pip` ofrece la 0.18.
+- **Cómo lo reformulé:** cada comando se ejecuta solo si aparece textualmente en el README, para
+  no transcribirlo mal; el informe ahora dice exactamente lo que se observó.
+- **Resultado final:** desde GitHub, sin credenciales: el repositorio es público (página 200,
+  `ls-remote` y `clone` anónimos); `.env` no está versionado ni lo estuvo nunca; el barrido de
+  todo el historial no encontró contraseñas, tokens ni claves (solo el valor de ejemplo de
+  `.env.example`); los 6 commits de un segundo nombre de autor son los 6 merges de PR. Los
+  diagramas Mermaid y las tablas del README se dibujan bien en GitHub. Con el README al pie de la
+  letra: `db` sano con el puerto 5433 publicado; operación de ejemplo (`bronze=30 silver=30
+  gold=24`, Patilla `2090.00`, bloque idéntico al del README); lote corrupto con exit 1 y silver
+  intacto; datos reales `bronze=5000 silver=5000 gold=1299`; dashboard respondiendo en
+  `localhost:8501`; 119 pruebas pasan. Cierra el pendiente de T6 sobre el paso de puertos.
 - **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
 
-### T7 a T12
+### Ampliación del informe: APA 7, conceptos y contraste (`chore/clean-clone-validation`)
+
+- **Prompt inicial (mío, textual):** "Revisa los requisitos de la entrega, tiene que ir en APA,
+  coloquemos una sección donde expliquemos los conceptos de ingeniería de datos para que se
+  entienda y cómo hace contraste el CI con el data ops".
+- **Qué falló o faltó:** (1) Al releer las guías, el documento del Escenario 3 **no pide APA de
+  forma explícita**; sí lo pide el Escenario 5 ("fuentes oficiales en APA 7"), y la lista de
+  "Material de consulta" de cada guía está en APA. Se aplicó APA 7 de todos modos y se dejó una
+  marca para confirmarlo con la docente. (2) La búsqueda web no devolvió el sitio oficial del
+  DataOps Manifesto, solo resúmenes de terceros; en lugar de citar principios de memoria, se
+  leyeron las páginas primarias de cada fuente. (3) Al leer el artículo de Fowler, la herramienta
+  avisó de que parte de su contenido era un resumen no verificado; solo se usó lo leído
+  textualmente (la definición y los títulos de las prácticas). (4) Se descartó una fuente
+  (Ereth, 2018) porque no se pudo confirmar el nombre del autor. (5) Un script de comprobación
+  mío falló por un error de formato en su última línea; no afectó al documento. (6) El formato
+  no se pudo ver renderizado: se verificó leyendo la estructura del archivo.
+- **Cómo lo reformulé:** cada afirmación atribuida a una fuente se apoya en lo verificado en su
+  página primaria, y las interpretaciones propias se señalan como tales en el texto; el
+  manifiesto se describe como documento de practicantes, creado y mantenido por una empresa, y se
+  contrasta con un artículo arbitrado (Munappy et al., 2020).
+- **Resultado final:** el informe ahora tiene portada y formato APA 7 (Times New Roman 12, doble
+  espacio, sangría de primera línea, encabezados de nivel 1 centrados y en negrita, número de
+  página arriba a la derecha, figuras y tablas rotuladas, referencias con sangría francesa), una
+  sección de conceptos de ingeniería de datos, un contraste entre integración continua y DataOps
+  con su relación con el proyecto, y 8 fuentes que corresponden una a una con sus citas.
+  Plantilla de formato: `docs/apa-reference.docx`. Para regenerar el Word:
+  `pandoc docs/informe-escenario-3.md -o docs/informe-escenario-3.docx --reference-doc=docs/apa-reference.docx --resource-path=docs`.
+- **Revisión (Gentle AI):** pendiente.
+
+### T8 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).

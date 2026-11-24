@@ -10,3 +10,4 @@ data/*.csv
 
 # Generated report (the deliverable is uploaded, not versioned)
 docs/*.docx
+!docs/apa-reference.docx
