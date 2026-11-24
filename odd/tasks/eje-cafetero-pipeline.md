@@ -23,7 +23,7 @@ Everything under this repository. Push, PR creation and merge stay with the user
 ## Scenario 3 tasks
 - [x] T1 `feat/bronze-extraction`: extractor (paginated Socrata CSV, pinned window), bronze loader with batch metadata, fixture CSV, unit tests. Check: bronze row count == source count.
 - [x] T2 `feat/silver-quality-gate`: Great Expectations suite (nulls, types, price > 0, min <= medio <= max, parseable dates, valid categories, duplicates), silver transform (Spanish dates, casts, normalization), gate blocks silver on failure, writes `meta.quality_runs`. Check: clean batch passes, corrupted batch is rejected.
-- [ ] T3 `feat/gold-aggregates`: `gold.precio_mensual` and `gold.variacion_mensual`. Check: known product/city/month matches a hand-computed value.
+- [x] T3 `feat/gold-aggregates`: `gold.precio_mensual` and `gold.variacion_mensual`. Check: known product/city/month matches a hand-computed value.
 - [ ] T4 `feat/pipeline-cli`: `python -m pipeline.run` orchestrator, `--source clean|corrupted`, corruption injector (nulls, duplicates, price x10, min>max, bad dates, negatives). Check: example operation prints the expected result.
 - [ ] T5 `feat/dashboard`: Streamlit on gold + last quality-gate status, plus a "what a corrupted batch would have shown" comparison. Check: container serves on 8501.
 - [ ] T6 `docs/readme-and-report`: README (clone-and-run), architecture diagram, screenshots, report, ai-log filled.
@@ -56,4 +56,8 @@ Gentle AI review of T2: approved (medium risk, reliability lens). Its 2 advisory
 fixed in a follow-up prompt: integration tests now run on `<db>_test`; a silver load failure
 after a passing gate is audited as `silver_load_error`. 45 tests green; real silver untouched.
 
-Next: open PR for T2, then T3 `feat/gold-aggregates`.
+T2 merged (PR #2).
+T3 done on `feat/gold-aggregates`: RED observed, 52 tests GREEN, gold matches an independent
+pandas computation on 5000 real rows (1,299 monthly rows, 0 unmatched). Route: inline.
+
+Next: open PR for T3, then T4 `feat/pipeline-cli`.

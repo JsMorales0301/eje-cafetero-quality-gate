@@ -125,7 +125,33 @@ autor omite la revisión de un cambio, se anota que se omitió.
     - *SUGGESTION* (`tests/test_promote_integration.py`): las pruebas de promoción no fijan la
       fecha de hoy, así que la regla de fechas plausibles depende del reloj real.
 
-### T3 a T12
+- **Revisión omitida:** un último commit de solo documentación (el registro de la revisión de la
+  corrección, +11 líneas sobre el candidato ya aprobado) volvió a generar un candidato de riesgo
+  medio. Gentle AI pidió consentimiento y elegí **omitir** la revisión de ese candidato.
+
+### T3: capa gold (`feat/gold-aggregates`)
+
+- **Prompt inicial:** Implementa la capa gold: `gold.precio_mensual` (precio promedio y número
+  de observaciones por producto, ciudad y mes) y `gold.variacion_mensual` (variación porcentual
+  contra el mes calendario anterior, nula si ese mes no existe). Debe construirse a partir de
+  silver y poder reconstruirse sin duplicar. Escribe primero pruebas con valores calculados a
+  mano y verifica contra los datos reales con un cálculo independiente en pandas.
+- **Qué falló o faltó:** nada falló en las pruebas (RED por módulo inexistente, luego GREEN).
+  En la verificación real, mi comparación independiente mostró una diferencia máxima de 0,01 en
+  las variaciones y no quise atribuirla a redondeo sin comprobarlo; además mis dos primeros
+  scripts de comprobación fallaron por mezclar `Decimal` con `float` al leer de Postgres.
+- **Cómo lo reformulé:** recalculé las 1.222 variaciones en aritmética decimal con redondeo
+  half-up, que es la convención de Postgres.
+- **Resultado final:** 52 pruebas pasan. Con 5000 filas reales: 1.299 filas en
+  `gold.precio_mensual` y 1.299 en `gold.variacion_mensual`; los promedios y conteos coinciden
+  al 100 % con un cálculo independiente en pandas (0 filas sin pareja, la suma de observaciones
+  es 5000 = filas de silver). Las variaciones coinciden exactamente con el cálculo decimal
+  half-up; solo 1 fila difiere del redondeo en float de numpy, que es otra convención.
+  Convenciones: una semana pertenece al mes de su fecha inicial, y la variación se mide contra
+  el mes calendario anterior (nula si ese mes no tiene datos).
+- **Revisión (Gentle AI):** pendiente; se registra aquí tras la revisión de este candidato.
+
+### T4 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).
