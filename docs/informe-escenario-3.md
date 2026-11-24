@@ -275,7 +275,9 @@ las reglas que fallaron.
 
 # Reproducción
 
-El detalle y los errores comunes están en el README del repositorio. En resumen:
+El detalle y los errores comunes están en el README del repositorio. En resumen (estos comandos
+dejan corriendo solo la base de datos; el *dashboard* se levanta aparte con
+`docker compose up -d app`):
 
 ```bash
 git clone https://github.com/JsMorales0301/eje-cafetero-quality-gate.git
@@ -294,8 +296,11 @@ marcado para la captura de pantalla.
 
 ## Captura 1. Contenedores en ejecución
 
-El comando `docker compose ps` debe mostrar `app` y `db` con estado `Up`, y `db` en `healthy`.
-Salida real, con el formato de tabla corto (en cada equipo los nombres llevan el de la carpeta):
+Los comandos de la sección "Reproducción" dejan corriendo solo `db`: `app` se ejecuta de forma
+temporal y se borra al terminar. Para que `docker compose ps` muestre los dos contenedores, antes
+hay que levantar el *dashboard* con `docker compose up -d app`. Entonces el comando debe mostrar
+`app` y `db` con estado `Up`, y `db` en `healthy`. Salida real, con el formato de tabla corto (en
+cada equipo los nombres llevan el de la carpeta):
 
 ```text
 SERVICE   STATUS                    PORTS
@@ -303,7 +308,8 @@ app       Up 2 seconds              127.0.0.1:8501->8501/tcp
 db        Up 37 seconds (healthy)   127.0.0.1:5433->5432/tcp
 ```
 
-[PENDIENTE (TÚ): pegar aquí tu captura 1 de `docker compose ps`.]{.mark}
+[PENDIENTE (TÚ): ejecutar `docker compose up -d app` y luego pegar aquí tu captura 1 de
+`docker compose ps`.]{.mark}
 
 ## Captura 2. Guardar un dato
 

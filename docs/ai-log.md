@@ -394,6 +394,21 @@ autor omite la revisión de un cambio, se anota que se omitió.
   `pandoc docs/informe-escenario-3.md -o docs/informe-escenario-3.docx --reference-doc=docs/apa-reference.docx --resource-path=docs`.
 - **Revisión (Gentle AI):** pendiente.
 
+### Corrección: instrucción de la Captura 1 del informe (`docs/clarify-capture-1`)
+
+- **Prompt (mío, textual):** "Cuando hago el docker compose ps solo me aparece db" y, después,
+  que ya había ejecutado `docker compose build app`, `docker compose up -d db` y
+  `docker compose run --rm app python -m pipeline.run --source fixture`.
+- **Qué falló o faltó:** el informe decía que `docker compose ps` debía mostrar `app` y `db`,
+  pero esos tres comandos (la sección "Reproducción") no dejan `app` corriendo: `run --rm` crea un
+  contenedor temporal que se borra al terminar. La instrucción era incompleta y es un error mío;
+  el comportamiento del sistema era el correcto. Lo comprobé en tu máquina: solo existía el
+  contenedor `db`, sano, y ningún contenedor `app`, ni siquiera detenido.
+- **Cómo lo reformulé:** la Captura 1 ahora indica que primero hay que ejecutar
+  `docker compose up -d app`, y la sección "Reproducción" aclara que solo deja corriendo la base.
+- **Resultado final:** cambio solo de documentación; no cambió ningún comportamiento.
+- **Revisión (Gentle AI):** pendiente.
+
 ### T8 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
