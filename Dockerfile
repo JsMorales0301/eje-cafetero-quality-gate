@@ -23,4 +23,5 @@ EXPOSE 8501
 
 # Default command: the dashboard. The pipeline is a one-off command:
 #   docker compose run --rm app python -m pipeline.run
-CMD ["streamlit", "run", "src/dashboard/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+CMD ["streamlit", "run", "src/dashboard/app.py", "--server.address=0.0.0.0", "--server.port=8501", \
+     "--browser.gatherUsageStats=false"]
