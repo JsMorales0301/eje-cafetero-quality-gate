@@ -10,7 +10,7 @@ TODAY = date(2026, 11, 24)
 
 
 def _clean() -> pd.DataFrame:
-    raw = pd.read_csv("tests/fixtures/precios_sample.csv", dtype=str)
+    raw = pd.read_csv("data/sample/precios_sample.csv", dtype=str)
     return build_silver_candidate(raw)
 
 

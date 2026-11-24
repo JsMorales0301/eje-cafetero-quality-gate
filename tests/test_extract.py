@@ -89,6 +89,6 @@ def test_fetch_source_count_uses_json_endpoint():
 
 
 def test_sample_fixture_matches_source_schema():
-    df = pd.read_csv("tests/fixtures/precios_sample.csv", dtype=str)
+    df = pd.read_csv("data/sample/precios_sample.csv", dtype=str)
     assert list(df.columns) == SOURCE_COLUMNS
     assert len(df) == 30

@@ -12,7 +12,7 @@ def test_integration_tests_run_on_a_dedicated_database(engine):
 
 
 def test_load_bronze_persists_exact_row_count_and_raw_text(engine):
-    raw = pd.read_csv("tests/fixtures/precios_sample.csv", dtype=str)
+    raw = pd.read_csv("data/sample/precios_sample.csv", dtype=str)
     batch = new_batch_id()
     loaded = load_bronze(raw, engine, batch_id=batch, source_url="fixture")
     assert loaded == 30

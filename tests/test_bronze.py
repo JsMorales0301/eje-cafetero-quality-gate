@@ -6,7 +6,7 @@ from pipeline.extract import SOURCE_COLUMNS
 
 
 def _sample() -> pd.DataFrame:
-    return pd.read_csv("tests/fixtures/precios_sample.csv", dtype=str)
+    return pd.read_csv("data/sample/precios_sample.csv", dtype=str)
 
 
 def test_prepare_adds_metadata_without_touching_source_values():
