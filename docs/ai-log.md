@@ -37,7 +37,12 @@ salida real (terminal, capturas) antes de aceptarlo.
 ## Prompt inicial por tarea
 
 Regla: antes de empezar cada tarea se escribe aquí el prompt inicial. Al terminarla se
-completan los otros tres campos.
+completan los otros tres campos y el campo **Revisión**.
+
+**Revisión:** la revisión del cambio la realiza **Gentle AI** (revisión nativa por receipt-driven
+development, con consentimiento explícito del autor para cada cambio de riesgo medio o alto).
+Se registra aquí el riesgo asignado, las lentes aplicadas, el resultado y los hallazgos. Si el
+autor omite la revisión de un cambio, se anota que se omitió.
 
 ### T1: extracción y capa bronze (`feat/bronze-extraction`)
 
@@ -79,10 +84,20 @@ completan los otros tres campos.
   lote limpio -> `quality gate PASSED`, 5000 filas en silver; lote corrupto -> `FAILED`
   (`key_unique`, `batch_mean.precio_medio`), exit code 1, silver intacto y ambas ejecuciones
   en `meta.quality_runs`.
+- **Revisión (Gentle AI):** riesgo medio (10 archivos, 630 líneas; cambio ejecutable en
+  `src/pipeline/promote.py`). Consentí la revisión. Una lente aplicada: *reliability*.
+  Resultado: **aprobada**, sin hallazgos bloqueantes. Hallazgos informativos, aún sin atender:
+  - *WARNING* (`tests/test_promote_integration.py:18`): la limpieza de las pruebas de
+    integración ejecuta `TRUNCATE silver.precios` sobre la base a la que apunte el entorno, por
+    lo que correrlas contra la base real borra el silver vigente. Silver se regenera con
+    `pipeline.promote`.
+  - *SUGGESTION* (`src/pipeline/promote.py:58-65`): si la carga a silver falla en un lote que
+    pasó el gate, la transacción se revierte y no queda fila en `meta.quality_runs`.
 
 ### T3 a T12
 
-Se completan al iniciar cada tarea, con el mismo formato que T1.
+Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
+cómo lo reformulé, resultado final y revisión (Gentle AI).
 
 ## Errores de la IA detectados
 
