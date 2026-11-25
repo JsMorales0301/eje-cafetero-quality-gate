@@ -63,6 +63,15 @@ def test_month_ticks_use_spanish_abbreviations():
     assert len(fig.layout.xaxis.tickvals) == len(fig.layout.xaxis.ticktext)
 
 
+def test_a_series_of_many_years_still_gets_a_bounded_number_of_ticks():
+    """Even January-only ticks are too many past ~8 years: the list must be thinned again."""
+    fig = price_figure(_series(list(range(100, 220)), start="2010-01-01"))  # 10 years
+    ticks = list(fig.layout.xaxis.ticktext)
+    assert 2 <= len(ticks) <= 8
+    assert ticks[0] == "ene 2010"
+    assert len(fig.layout.xaxis.tickvals) == len(ticks)
+
+
 def test_a_long_series_gets_a_readable_number_of_ticks_including_every_spanish_month():
     fig = price_figure(_series(list(range(100, 140)), start="2022-01-01"))  # 40 months
     ticks = list(fig.layout.xaxis.ticktext)

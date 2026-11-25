@@ -133,6 +133,27 @@ docker compose exec db psql -U pipeline -d canasta -c "SELECT 'bronze' AS capa, 
 
 Esperado: `bronze 30`, `silver 30`, `gold mensual 24`.
 
+## Verificar automáticamente el resultado de la operación
+
+El resultado esperado de la operación de ejemplo vive en
+[`data/sample/expected_fixture.json`](data/sample/expected_fixture.json) y se comprueba con un
+comando que **decide** si el resultado es el correcto (lo usa la integración continua):
+
+```bash
+docker compose run --rm app python -m pipeline.verify
+```
+
+Después de la operación de ejemplo, el resultado esperado es:
+
+```text
+VERIFY OK bronze=30 silver=30 gold=24 samples=3
+```
+
+Si algo difiere, imprime **cada** diferencia y termina con código `1`; si la verificación no
+pudo ejecutarse (falta el archivo, no hay base de datos), termina con `2`. Comprueba las filas de
+cada capa, que el último control de calidad haya pasado, y tres promedios mensuales calculados
+de forma independiente con pandas, dos de ellos con más de una observación.
+
 ## Demostración: un dato corrupto no llega al dashboard
 
 Inyecta duplicados en el lote y comprueba que el gate lo detiene (código de salida **1**):
@@ -190,7 +211,7 @@ inyecta una corrupción al último lote aprobado y compara lo que el dashboard h
 docker compose run --rm app pytest -q
 ```
 
-Esperado: `127 passed`. Las pruebas de integración usan su propia base `canasta_test`, creada
+Esperado: `159 passed`. Las pruebas de integración usan su propia base `canasta_test`, creada
 sola: **no tocan tus datos**.
 
 ## Variables de entorno (`.env`)
@@ -204,6 +225,28 @@ sola: **no tocan tus datos**.
 | `POSTGRES_PORT` | Puerto de la base dentro de la red. | `5432` |
 | `SOCRATA_DATASET_URL` | Fuente de los datos. | `https://www.datos.gov.co/resource/gdqq-rry2.csv` |
 | `SOCRATA_ROW_LIMIT` | Opcional: filas a extraer (`5000` por defecto, o `all`). | `5000` |
+
+## Integración continua con Jenkins
+
+El [`Jenkinsfile`](Jenkinsfile) construye y verifica el proyecto cada vez que Jenkins detecta un
+cambio en el repositorio (*Poll SCM*, cada unos 2 minutos). Cada construcción usa su propio
+proyecto de Compose y **no publica puertos** ([`docker-compose.ci.yml`](docker-compose.ci.yml)),
+así que no choca con tus contenedores. Etapas:
+
+| Etapa | Qué hace |
+|---|---|
+| Obtener codigo | Descarga el repositorio y muestra el commit. |
+| Preparar entorno | Genera un `.env` con una contraseña aleatoria por construcción (nunca se guarda ni se imprime). |
+| Construir imagen | `docker compose build app`. |
+| Levantar contenedores | `docker compose up -d --wait`: levanta `db` y `app` y espera a que estén sanos. |
+| Operacion de ejemplo | `pipeline.run --source fixture` dentro de `app`; falla si el control de calidad rechaza el lote. |
+| Verificar resultado | `pipeline.verify`: falla si el resultado no es el esperado. |
+| (siempre) | Guarda los registros de los contenedores y retira todo, aunque la construcción haya fallado. |
+
+Si una construcción falla, la descripción de la construcción indica en qué etapa (`Fallo en la
+etapa: ...`). Para provocar una falla a propósito, ejecuta **Build with Parameters** y pon, por
+ejemplo, `duplicates` en `CORRUPT`: el control de calidad rechaza el lote y la construcción falla
+en "Operacion de ejemplo". El parámetro solo admite letras minúsculas, guion bajo y comas.
 
 ## Errores comunes
 
@@ -223,12 +266,14 @@ Para apagar todo: `docker compose down` (conserva los datos) o `docker compose d
 
 ```text
 docker-compose.yml   dos servicios: app y db
+docker-compose.ci.yml  override para Jenkins: sin puertos publicados
+Jenkinsfile          pipeline de integración continua
 Dockerfile           imagen de app (código, pruebas y dashboard)
 sql/init.sql         esquemas bronze, silver, gold y meta
-src/pipeline/        extract, bronze, silver, quality (gate), promote, gold, corruption, run
+src/pipeline/        extract, bronze, silver, quality (gate), promote, gold, corruption, run, verify
 src/dashboard/       app de Streamlit, consultas, gráficos y lógica "qué pasaría sin el gate"
 data/sample/         muestra determinista de 30 filas
-tests/               127 pruebas (unitarias e integración)
+tests/               159 pruebas (unitarias e integración)
 docs/                registro de uso de IA, informe y diagramas
 ```
 

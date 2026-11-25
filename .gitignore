@@ -7,6 +7,7 @@ gx/uncommitted/
 data/*.csv
 !data/corrupted/.gitkeep
 .DS_Store
+ci-containers.log
 
 # Generated report (the deliverable is uploaded, not versioned)
 docs/*.docx

@@ -52,8 +52,10 @@ def _month_ticks(frames: list) -> tuple[list, list]:
             chosen = [m for m in months if (m.month - 1) % modulus == 0]
             if len(chosen) <= MAX_TICKS:
                 break
-        if len(chosen) < 2:
+        if len(chosen) < 2:  # too few January ticks: thin the months themselves
             chosen = months[:: math.ceil(len(months) / MAX_TICKS)]
+        elif len(chosen) > MAX_TICKS:  # more than ~8 years even with January only
+            chosen = chosen[:: math.ceil(len(chosen) / MAX_TICKS)]
     return chosen, [f"{MONTHS_ES[m.month - 1]} {m.year}" for m in chosen]
 
 

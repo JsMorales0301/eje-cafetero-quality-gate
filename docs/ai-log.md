@@ -441,9 +441,82 @@ autor omite la revisión de un cambio, se anota que se omitió.
   reemplazaron las cuatro capturas del dashboard por otras de la versión en español. La
   afirmación de T5 de que la pitahaya "desaparece" del ranking no se sostiene con la simulación
   reproducible.
-- **Revisión (Gentle AI):** pendiente.
+- **Revisión (Gentle AI):** en su momento **omitida** (candidato propio). Ese código quedó cubierto
+  después por la revisión de la rama del Escenario 5, que partía de `main` (ver T9).
 
-### T8 a T12
+## Escenario 5: Jenkins
+
+- **Prompt inicial (mío, textual):** "Ya tengo terminado el entregable de la semana 3, vamos con el
+  de la semana 5". Antes de instalar nada, la IA revisó los requisitos y tu equipo y te preguntó
+  si instalaba Jenkins con Homebrew (`jenkins-lts` y `openjdk@21`, servicio en el puerto 8080);
+  respondiste: "Sí, instala Jenkins". El asistente de configuración de Jenkins, que pide crear el
+  usuario administrador con una contraseña, queda como paso tuyo.
+- **Plan:** T8 verificación de la operación, T9 `Jenkinsfile`, T10 instalar y configurar Jenkins,
+  T11 falla provocada y corrección, T12 documento de requisitos en APA 7.
+
+### T8: verificación de la operación de ejemplo (`feat/verify-operation`)
+
+- **Prompt inicial:** Implementa `python -m pipeline.verify`, un comando que compare el resultado
+  de la operación de ejemplo con un resultado esperado versionado y que termine con código distinto
+  de cero si difiere, imprimiendo cada diferencia. Calcula los valores esperados de forma
+  independiente del SQL. Escribe primero las pruebas.
+- **Qué falló o faltó:** el entorno temporal de la sesión cambió de ruta y mi entorno de pandas
+  quedó en la anterior, así que lo recreé. Las 17 pruebas pasaron a la primera tras implementar
+  (el RED fue por módulo inexistente), por lo que su valor está en que las pruebas de manipulación
+  (cambiar un precio, borrar filas, un lote rechazado) fallan como deben, no en haber descubierto un
+  defecto.
+- **Cómo lo reformulé:** los valores esperados (30 filas, 24 grupos mensuales y 3 promedios,
+  dos de ellos con dos observaciones) salen de agrupar la muestra con pandas, no de consultar la
+  base; así la verificación no se compara consigo misma.
+- **Resultado final:** 144 pruebas pasan. Con el comando real: base vacía -> falla con 7
+  diferencias; tras la operación limpia -> `VERIFY OK bronze=30 silver=30 gold=24 samples=3`,
+  exit 0; tras un lote rechazado -> falla aunque *silver* conserve datos buenos, porque el último
+  control no pasó (`bronze rows: expected 30, got 31` y `last quality gate run: expected passed,
+  got rejected`), exit 1. Un archivo esperado inexistente es exit 2, no un fallo del resultado.
+- **Revisión (Gentle AI):** cubierta por la revisión de la rama completa del Escenario 5 (ver T9):
+  **aprobada**, sin hallazgos sobre `pipeline.verify`.
+
+### T9: Jenkinsfile y override de CI (`feat/jenkinsfile`)
+
+- **Prompt inicial:** Escribe el `Jenkinsfile` que obtiene el código, construye la imagen, levanta
+  los dos contenedores, ejecuta la operación de ejemplo, verifica el resultado (que decida si pasa
+  o falla) y retira todo aunque falle. Debe dispararse con Poll SCM, indicar en qué etapa falló,
+  no guardar secretos en el repositorio y no chocar con mis contenedores. Escribe primero pruebas
+  estructurales y simula la construcción antes de tener Jenkins configurado.
+- **Qué falló o faltó:** (1) Una de mis 14 pruebas falló por un defecto de la propia prueba: buscaba
+  el texto `set -x` en todo el bloque y mi comentario del `Jenkinsfile` lo menciona; la corregí para
+  mirar solo el cuerpo del script de shell. (2) Las pruebas leen el `Jenkinsfile` desde la raíz del
+  repositorio y la imagen no lo traía, así que copié los tres archivos de CI a la imagen para que
+  `docker compose run --rm app pytest` las ejecute en vez de saltarlas en silencio. (3) **Lo que no
+  está verificado:** la sintaxis Groovy y el comportamiento propio de Jenkins (los plugins
+  *Timestamper* y *Pipeline*, `pollSCM`, `archiveArtifacts`, `currentBuild.description`). La
+  simulación ejecuta los pasos de `sh`, no el Groovy; eso solo se comprueba cuando Jenkins corra la
+  primera construcción.
+- **Cómo lo reformulé:** escribí un simulador que lee el `Jenkinsfile` y ejecuta sus etapas y sus
+  pasos `sh` en orden, con un `PATH` mínimo como el de un servicio de macOS, en un clon limpio, con
+  un proyecto de Compose aparte, y que comprueba que la contraseña generada no aparece en la salida.
+- **Resultado final:** 158 pruebas pasan. Simulación de una construcción normal: las seis etapas
+  pasan (`RESULT OK bronze=30 silver=30 gold=24`, `VERIFY OK ...`), la contraseña no aparece en la
+  salida y no queda ningún contenedor, volumen ni `.env`. Simulación con `CORRUPT=duplicates`:
+  falla en "Operacion de ejemplo" con código 1, la verificación no se alcanza y el cierre limpia
+  todo igual. El parámetro rechaza `duplicates; rm -rf /`, `$(id)`, mayúsculas y espacios antes de
+  llegar al shell. Decisiones: `docker compose exec` en vez de `run`, para que la operación corra en
+  el contenedor ya levantado; contraseña aleatoria por construcción, en lugar de una credencial
+  guardada en Jenkins; sin puertos publicados, para no chocar con los contenedores de desarrollo.
+- **Revisión (Gentle AI):** la revisión de la rama completa del Escenario 5 contra `main` (26
+  archivos, 1029 líneas; la evidencia señaló `.gitignore`) cubrió T8, T9 y también el código del
+  dashboard en español y la lectura determinista del lote, que habías omitido en su momento.
+  Consentí la revisión. Una lente aplicada: *reliability*. Resultado: **aprobada**, sin hallazgos
+  bloqueantes. Un hallazgo informativo (*WARNING*, `src/dashboard/charts.py:50-56`): con más de
+  unos 8 años de datos mensuales, `_month_ticks` dejaba más de 8 marcas en el eje, porque el
+  adelgazamiento solo se activaba si quedaban menos de 2. **Lo reproduje con una prueba (10 marcas
+  con 10 años de datos) y lo corregí** (ahora el eje queda entre 2 y 8 marcas). Esa corrección la
+  hice por iniciativa de la IA, sin un prompt nuevo tuyo, porque la rama aún no se había subido;
+  no se volvió a revisar. El revisor también observó, sin levantar un hallazgo, que el informe del
+  Escenario 3 dice 127 pruebas y el README 159: lo dejé así a propósito, porque el informe es un
+  documento de la semana 3 y describe el proyecto en ese momento, no el estado actual.
+
+### T10 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).
