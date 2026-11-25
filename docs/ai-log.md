@@ -516,10 +516,45 @@ autor omite la revisión de un cambio, se anota que se omitió.
   Escenario 3 dice 127 pruebas y el README 159: lo dejé así a propósito, porque el informe es un
   documento de la semana 3 y describe el proyecto en ese momento, no el estado actual.
 
-### T10 a T12
+### T10: Jenkins local (sin rama: instalación en el equipo)
 
-Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
-cómo lo reformulé, resultado final y revisión (Gentle AI).
+- **Prompt inicial:** "Sí, instala Jenkins" (tras revisar la IA los requisitos y el equipo, y
+  preguntarte antes de instalar).
+- **Qué falló o faltó:** el equipo solo tenía `openjdk@17` y Jenkins LTS exige Java 21 o 25; Homebrew
+  instaló `openjdk@21` como dependencia. La clave inicial, el usuario y la contraseña los manejaste
+  tú en el asistente; la IA no los vio ni los registró.
+- **Resultado final:** Jenkins 2.580.2 corriendo como servicio en `127.0.0.1:8080` (respondió 200
+  a los 12 s); job de Pipeline desde SCM configurado por ti; el *Poll SCM* quedó registrado solo
+  tras la primera construcción (comprobado en `config.xml`).
+- **Revisión (Gentle AI):** no aplica; no cambió código del repositorio.
+
+### T11: falla provocada y corrección (commits de falla y de reversión)
+
+- **Prompt inicial:** provocar una falla real que detecte solo la verificación, ver la construcción
+  en rojo con Poll SCM y corregirla.
+- **Qué falló o faltó:** nada que corregir en la IA. Se simuló antes y la falla coincidió con la
+  prevista (`precio_promedio expected 2090.00, got 2290.00`); el control de calidad aceptó el lote
+  porque el valor seguía entre el mínimo y el máximo.
+- **Resultado final (observado en Jenkins):** construcción 1 verde (manual, 4a02501), 2 roja (Poll
+  SCM, 860491a, etapa "Verificar resultado") y 3 verde (Poll SCM, 852bfc9). Sin contenedores,
+  volúmenes ni `.env` residuales.
+- **Revisión (Gentle AI):** los commits de la falla y de la reversión se revisaron por separado:
+  ambos **aprobados**, con hallazgos no bloqueantes y esperados (el cambio es deliberadamente
+  incorrecto).
+
+### T12: documento de requisitos (`docs/jenkins-requirements`)
+
+- **Prompt inicial:** redactar el documento de requisitos de Jenkins en APA 7: repositorio,
+  infraestructura con versiones y fuentes oficiales, configuración, pasos repetibles, operación,
+  prueba con capturas, riesgos y registro de IA; lo que debas hacer tú, marcado en amarillo.
+- **Qué falló o faltó:** dos fuentes no decían lo que yo suponía: la página de Jenkins para macOS no
+  trae comandos de Homebrew (se citó la fórmula `jenkins-lts`) y la página de Compose consultada no
+  documenta `!reset` (se citó "Merge Compose files"). Las páginas de seguridad no cubren
+  actualizaciones ni usuario sin privilegios: esos puntos están rotulados como recomendación propia.
+- **Resultado final:** `docs/requisitos-jenkins.md` y su `.docx` (14 fuentes citadas y 14 en
+  referencias, sin huérfanas). **Pendiente tuyo:** portada, 3 capturas, confirmar esta sección,
+  opcionalmente la construcción con `CORRUPT=duplicates`.
+- **Revisión (Gentle AI):** pendiente.
 
 ## Errores de la IA detectados
 
