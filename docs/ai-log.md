@@ -474,7 +474,36 @@ autor omite la revisión de un cambio, se anota que se omitió.
   got rejected`), exit 1. Un archivo esperado inexistente es exit 2, no un fallo del resultado.
 - **Revisión (Gentle AI):** pendiente.
 
-### T9 a T12
+### T9: Jenkinsfile y override de CI (`feat/jenkinsfile`)
+
+- **Prompt inicial:** Escribe el `Jenkinsfile` que obtiene el código, construye la imagen, levanta
+  los dos contenedores, ejecuta la operación de ejemplo, verifica el resultado (que decida si pasa
+  o falla) y retira todo aunque falle. Debe dispararse con Poll SCM, indicar en qué etapa falló,
+  no guardar secretos en el repositorio y no chocar con mis contenedores. Escribe primero pruebas
+  estructurales y simula la construcción antes de tener Jenkins configurado.
+- **Qué falló o faltó:** (1) Una de mis 14 pruebas falló por un defecto de la propia prueba: buscaba
+  el texto `set -x` en todo el bloque y mi comentario del `Jenkinsfile` lo menciona; la corregí para
+  mirar solo el cuerpo del script de shell. (2) Las pruebas leen el `Jenkinsfile` desde la raíz del
+  repositorio y la imagen no lo traía, así que copié los tres archivos de CI a la imagen para que
+  `docker compose run --rm app pytest` las ejecute en vez de saltarlas en silencio. (3) **Lo que no
+  está verificado:** la sintaxis Groovy y el comportamiento propio de Jenkins (los plugins
+  *Timestamper* y *Pipeline*, `pollSCM`, `archiveArtifacts`, `currentBuild.description`). La
+  simulación ejecuta los pasos de `sh`, no el Groovy; eso solo se comprueba cuando Jenkins corra la
+  primera construcción.
+- **Cómo lo reformulé:** escribí un simulador que lee el `Jenkinsfile` y ejecuta sus etapas y sus
+  pasos `sh` en orden, con un `PATH` mínimo como el de un servicio de macOS, en un clon limpio, con
+  un proyecto de Compose aparte, y que comprueba que la contraseña generada no aparece en la salida.
+- **Resultado final:** 158 pruebas pasan. Simulación de una construcción normal: las seis etapas
+  pasan (`RESULT OK bronze=30 silver=30 gold=24`, `VERIFY OK ...`), la contraseña no aparece en la
+  salida y no queda ningún contenedor, volumen ni `.env`. Simulación con `CORRUPT=duplicates`:
+  falla en "Operacion de ejemplo" con código 1, la verificación no se alcanza y el cierre limpia
+  todo igual. El parámetro rechaza `duplicates; rm -rf /`, `$(id)`, mayúsculas y espacios antes de
+  llegar al shell. Decisiones: `docker compose exec` en vez de `run`, para que la operación corra en
+  el contenedor ya levantado; contraseña aleatoria por construcción, en lugar de una credencial
+  guardada en Jenkins; sin puertos publicados, para no chocar con los contenedores de desarrollo.
+- **Revisión (Gentle AI):** pendiente.
+
+### T10 a T12
 
 Se completan al iniciar cada tarea, con el mismo formato que T2: prompt inicial, qué falló,
 cómo lo reformulé, resultado final y revisión (Gentle AI).

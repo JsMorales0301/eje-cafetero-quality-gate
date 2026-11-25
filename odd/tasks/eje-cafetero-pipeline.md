@@ -31,7 +31,7 @@ Everything under this repository. Push, PR creation and merge stay with the user
 
 ## Scenario 5 tasks (after Scenario 3 is delivered)
 - [x] T8 `feat/verify-operation`: standalone verification command that exits non-zero when the result differs from the expected one.
-- [ ] T9 `feat/jenkinsfile`: stages checkout, build image, up, verify, and `post { always }` teardown; reports the failing stage; `sh` on macOS; Poll SCM trigger.
+- [x] T9 (shell steps verified by simulation; Groovy untested until Jenkins runs it) `feat/jenkinsfile`: stages checkout, build image, up, verify, and `post { always }` teardown; reports the failing stage; `sh` on macOS; Poll SCM trigger.
 - [ ] T10 Jenkins local install and configuration (macOS): Java, Docker access for the Jenkins account, plugins, no secrets in repo.
 - [ ] T11 Provoke failure with the corrupted batch, confirm build fails, fix, confirm green; capture history.
 - [ ] T12 Requirements document: infrastructure with versions and official sources (APA 7), configuration, repeatable install steps, operation, risks (security, backup, growth), AI log.
