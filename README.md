@@ -248,6 +248,9 @@ etapa: ...`). Para provocar una falla a propósito, ejecuta **Build with Paramet
 ejemplo, `duplicates` en `CORRUPT`: el control de calidad rechaza el lote y la construcción falla
 en "Operacion de ejemplo". El parámetro solo admite letras minúsculas, guion bajo y comas.
 
+La instalación de Jenkins, su configuración, la operación y los riesgos están en
+[`docs/requisitos-jenkins.md`](docs/requisitos-jenkins.md).
+
 ## Errores comunes
 
 | Síntoma | Causa y solución |
