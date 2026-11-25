@@ -441,7 +441,8 @@ autor omite la revisión de un cambio, se anota que se omitió.
   reemplazaron las cuatro capturas del dashboard por otras de la versión en español. La
   afirmación de T5 de que la pitahaya "desaparece" del ranking no se sostiene con la simulación
   reproducible.
-- **Revisión (Gentle AI):** pendiente.
+- **Revisión (Gentle AI):** en su momento **omitida** (candidato propio). Ese código quedó cubierto
+  después por la revisión de la rama del Escenario 5, que partía de `main` (ver T9).
 
 ## Escenario 5: Jenkins
 
@@ -472,7 +473,8 @@ autor omite la revisión de un cambio, se anota que se omitió.
   exit 0; tras un lote rechazado -> falla aunque *silver* conserve datos buenos, porque el último
   control no pasó (`bronze rows: expected 30, got 31` y `last quality gate run: expected passed,
   got rejected`), exit 1. Un archivo esperado inexistente es exit 2, no un fallo del resultado.
-- **Revisión (Gentle AI):** pendiente.
+- **Revisión (Gentle AI):** cubierta por la revisión de la rama completa del Escenario 5 (ver T9):
+  **aprobada**, sin hallazgos sobre `pipeline.verify`.
 
 ### T9: Jenkinsfile y override de CI (`feat/jenkinsfile`)
 
@@ -501,7 +503,18 @@ autor omite la revisión de un cambio, se anota que se omitió.
   llegar al shell. Decisiones: `docker compose exec` en vez de `run`, para que la operación corra en
   el contenedor ya levantado; contraseña aleatoria por construcción, en lugar de una credencial
   guardada en Jenkins; sin puertos publicados, para no chocar con los contenedores de desarrollo.
-- **Revisión (Gentle AI):** pendiente.
+- **Revisión (Gentle AI):** la revisión de la rama completa del Escenario 5 contra `main` (26
+  archivos, 1029 líneas; la evidencia señaló `.gitignore`) cubrió T8, T9 y también el código del
+  dashboard en español y la lectura determinista del lote, que habías omitido en su momento.
+  Consentí la revisión. Una lente aplicada: *reliability*. Resultado: **aprobada**, sin hallazgos
+  bloqueantes. Un hallazgo informativo (*WARNING*, `src/dashboard/charts.py:50-56`): con más de
+  unos 8 años de datos mensuales, `_month_ticks` dejaba más de 8 marcas en el eje, porque el
+  adelgazamiento solo se activaba si quedaban menos de 2. **Lo reproduje con una prueba (10 marcas
+  con 10 años de datos) y lo corregí** (ahora el eje queda entre 2 y 8 marcas). Esa corrección la
+  hice por iniciativa de la IA, sin un prompt nuevo tuyo, porque la rama aún no se había subido;
+  no se volvió a revisar. El revisor también observó, sin levantar un hallazgo, que el informe del
+  Escenario 3 dice 127 pruebas y el README 159: lo dejé así a propósito, porque el informe es un
+  documento de la semana 3 y describe el proyecto en ese momento, no el estado actual.
 
 ### T10 a T12
 

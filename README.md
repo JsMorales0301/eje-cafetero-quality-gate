@@ -211,7 +211,7 @@ inyecta una corrupción al último lote aprobado y compara lo que el dashboard h
 docker compose run --rm app pytest -q
 ```
 
-Esperado: `158 passed`. Las pruebas de integración usan su propia base `canasta_test`, creada
+Esperado: `159 passed`. Las pruebas de integración usan su propia base `canasta_test`, creada
 sola: **no tocan tus datos**.
 
 ## Variables de entorno (`.env`)
@@ -273,7 +273,7 @@ sql/init.sql         esquemas bronze, silver, gold y meta
 src/pipeline/        extract, bronze, silver, quality (gate), promote, gold, corruption, run, verify
 src/dashboard/       app de Streamlit, consultas, gráficos y lógica "qué pasaría sin el gate"
 data/sample/         muestra determinista de 30 filas
-tests/               158 pruebas (unitarias e integración)
+tests/               159 pruebas (unitarias e integración)
 docs/                registro de uso de IA, informe y diagramas
 ```
 
